@@ -6,7 +6,7 @@
 #include "Timer_13avril2018.h"
 #include "Timer_13avril2018Dlg.h"
 #include "afxdialogex.h"
-
+//test
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
