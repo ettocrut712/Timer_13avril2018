@@ -256,7 +256,7 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 	m_2_posX += m_2_speedX;
 	m_2_posY += m_2_speedY;
 
-	if (m_1_posX > 1492 || m_1_posX < 330) m_1_speedX = -1 * m_1_speedX;
+	if (m_1_posX > 1491 || m_1_posX < 330) m_1_speedX = -1 * m_1_speedX;
 	if (m_1_posY > 900 || m_1_posY < 110) m_1_speedY = -1 * m_1_speedY;
 	if (m_2_posX > 1490 || m_2_posX < 330) m_2_speedX = -1 * m_2_speedX;
 	if (m_2_posY > 900 || m_2_posY < 110) m_2_speedY = -1 * m_2_speedY;
