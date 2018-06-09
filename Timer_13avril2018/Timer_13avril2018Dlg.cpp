@@ -63,6 +63,8 @@ CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent /*=NULL*/)
 	, m_1_speedY(0)
 	, m_2_speedX(0)
 	, m_2_speedY(0)
+	, m_iNombreEcho(0)
+	, m_iNombreEtoile(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -78,6 +80,9 @@ void CTimer_13avril2018Dlg::DoDataExchange(CDataExchange* pDX)
 
 	DDX_Text(pDX, IDC_EINTERVAL, m_iInterval);
 	DDV_MinMaxInt(pDX, m_iInterval, 0, 10000);
+	DDX_Text(pDX, IDC_ENOMBRE_ECHO, m_iNombreEcho);
+	DDX_Text(pDX, IDC_ENOMBRE_ETOILE, m_iNombreEtoile);
+	DDV_MinMaxInt(pDX, m_iNombreEtoile, 1, 10);
 }
 
 BEGIN_MESSAGE_MAP(CTimer_13avril2018Dlg, CDialogEx)
@@ -88,6 +93,8 @@ BEGIN_MESSAGE_MAP(CTimer_13avril2018Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_STOPBUTTON, &CTimer_13avril2018Dlg::OnBnClickedStopbutton)
 	ON_EN_CHANGE(IDC_EINTERVAL, &CTimer_13avril2018Dlg::OnChangeEinterval)
 	ON_WM_TIMER()
+	ON_EN_CHANGE(IDC_ENOMBRE_ECHO, &CTimer_13avril2018Dlg::OnEnChangeEnombreEcho)
+	ON_EN_CHANGE(IDC_ENOMBRE_ETOILE, &CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile)
 END_MESSAGE_MAP()
 
 
@@ -136,6 +143,11 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 	m_1_speedY = 6;
 	m_2_speedX = 7;
 	m_2_speedY = 8;
+
+
+	// nouveau code qui fonctionne avec constellation et CEtoile
+	m_iNombreEcho = 1;
+	m_iNombreEtoile = 2;
 
 	UpdateData(FALSE);
 
@@ -231,7 +243,7 @@ void CTimer_13avril2018Dlg::OnChangeEinterval()
 	UpdateData(TRUE);
 }
 
-
+//test
 void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: Add your message handler code here and/or call default
@@ -243,7 +255,7 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 	CClientDC dc(this);
 
 
-	Invalidate();
+	//Invalidate();
 	UpdateWindow();
 
 	
@@ -265,4 +277,35 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 
 
 	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+void CTimer_13avril2018Dlg::OnEnChangeEnombreEcho()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+
+	UpdateData(TRUE);
+	
+
+
+}
+
+
+void CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+
+	UpdateData(TRUE);
+
+	
 }

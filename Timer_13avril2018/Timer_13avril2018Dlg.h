@@ -54,4 +54,8 @@ public:
 	int m_1_speedY;
 	int m_2_speedX;
 	int m_2_speedY;
+	afx_msg void OnEnChangeEnombreEcho();
+	int m_iNombreEcho;
+	afx_msg void OnEnChangeEnombreEtoile();
+	int m_iNombreEtoile;
 };
