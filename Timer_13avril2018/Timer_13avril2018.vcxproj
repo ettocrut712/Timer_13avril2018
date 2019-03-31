@@ -185,6 +185,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CPaintDlg.h" />
     <ClInclude Include="Etoile.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -193,6 +194,7 @@
     <ClInclude Include="Timer_13avril2018Dlg.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CPaintDlg.cpp" />
     <ClCompile Include="Etoile.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

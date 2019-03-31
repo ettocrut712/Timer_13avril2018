@@ -4,6 +4,10 @@
 
 #pragma once
 #include "afxwin.h"
+#include "CPaintDlg.h"
+
+
+
 
 
 // CTimer_13avril2018Dlg dialog
@@ -44,9 +48,12 @@ public:
 	int m_iCount;
 	afx_msg void OnChangeEinterval();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+
 private:
-	int m_1_posX;
+	
+
 public:
+	int m_1_posX;
 	int m_1_posY;
 	int m_2_posX;
 	int m_2_posY;
@@ -58,4 +65,22 @@ public:
 	int m_iNombreEcho;
 	afx_msg void OnEnChangeEnombreEtoile();
 	int m_iNombreEtoile;
+	CPaintDlg m_paintDlg;
+
+	struct ligne 
+	{
+		int point_1;
+		int point_2;
+		int point_3;
+		int point_4;
+	};
+
+	int top, bottom, left, right;
+	
+	
+
+	ligne m_Lignes[100];
+
+	int m_pointeur_ligne =0;
+
 };

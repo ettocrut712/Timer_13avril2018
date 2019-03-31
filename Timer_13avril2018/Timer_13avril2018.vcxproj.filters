@@ -36,6 +36,9 @@
     <ClInclude Include="Etoile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CPaintDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Timer_13avril2018.cpp">
@@ -48,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Etoile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CPaintDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

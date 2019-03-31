@@ -14,6 +14,9 @@
 
 // CAboutDlg dialog used for App About
 
+
+
+
 class CAboutDlg : public CDialogEx
 {
 public:
@@ -131,13 +134,20 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 
+	
+	
+
+	m_paintDlg.ShowWindow(SW_SHOW);
+	
+
+
 	m_iInterval = 10;
 
-	m_1_posX = 511;
-	m_1_posY = 522;
+	m_1_posX = (left + right) / 2 + m_1_speedX;
+	m_1_posY = (top + bottom) / 2 + m_1_speedY;
 
-	m_2_posX = 511;
-	m_2_posY = 521;
+	m_2_posX = (left + right) / 2 + m_2_speedX;
+	m_2_posY = (top + bottom) / 2 + m_2_speedY;
 
 	m_1_speedX = 5;
 	m_1_speedY = 6;
@@ -173,9 +183,11 @@ void CTimer_13avril2018Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 void CTimer_13avril2018Dlg::OnPaint()
 {
+	CPaintDC dc(this); // device context for painting
+
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // device context for painting
+		//CPaintDC dc(this); // device context for painting
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
@@ -188,10 +200,35 @@ void CTimer_13avril2018Dlg::OnPaint()
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
 		// Draw the icon
-		dc.DrawIcon(x, y, m_hIcon);
+
+
+
+		
+		
 	}
 	else
 	{
+
+		int i = 0;
+		
+		
+		m_pointeur_ligne++;
+
+		if (m_pointeur_ligne > m_iNombreEcho)
+			m_pointeur_ligne = 0;
+
+
+		for (i = 0; i <= m_iNombreEcho; i++)
+		{
+
+			dc.MoveTo(m_Lignes[i].point_1, m_Lignes[i].point_2);
+			dc.LineTo(m_Lignes[i].point_3, m_Lignes[i].point_4);
+		};
+		
+
+		
+		
+		
 		CDialogEx::OnPaint();
 	}
 }
@@ -209,11 +246,21 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 {
 	// TODO: Add your control notification handler code here
 
+	bottom = 762;
+	left = 220;
+	right = 1130;
+	top = 95;
+	
+	
 	UpdateData(TRUE);
 	m_iCount = 0;
 	
 	m_sCount.Format(_T("%d"), m_iCount);
+	m_1_posX = (left+right)/2 + m_1_speedX;
+	m_1_posY = (top + bottom)/2 +m_1_speedY;
 
+	m_2_posX = (left+right)/2 +m_2_speedX;
+	m_2_posY = (top+bottom)/2 + m_2_speedY;
 
 	UpdateData(FALSE);
 
@@ -250,28 +297,93 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 
 	m_iCount++;
 
+	
+
 	m_sCount.Format(_T("%d"), m_iCount);
 
 	CClientDC dc(this);
+	bool bErase = TRUE;
+	
+	RECT lpRect;
 
-
-	//Invalidate();
-	UpdateWindow();
+	lpRect.bottom = bottom;
+	lpRect.left = left;
+	lpRect.right = right;
+	lpRect.top = top;
 
 	
-	dc.MoveTo(m_1_posX, m_1_posY);
-	dc.LineTo(m_2_posX, m_2_posY);
 
-	m_1_posX += m_1_speedX;
-	m_1_posY += m_1_speedY;
+	
 
-	m_2_posX += m_2_speedX;
-	m_2_posY += m_2_speedY;
 
-	if (m_1_posX > 1491 || m_1_posX < 330) m_1_speedX = -1 * m_1_speedX;
-	if (m_1_posY > 900 || m_1_posY < 110) m_1_speedY = -1 * m_1_speedY;
-	if (m_2_posX > 1490 || m_2_posX < 330) m_2_speedX = -1 * m_2_speedX;
-	if (m_2_posY > 900 || m_2_posY < 110) m_2_speedY = -1 * m_2_speedY;
+	m_1_posX = m_1_posX + m_1_speedX;
+	m_1_posY = m_1_posY + m_1_speedY;
+
+	m_2_posX = m_2_posX + m_2_speedX;
+	m_2_posY = m_2_posY + m_2_speedY;
+
+	if (m_1_posX > right )
+	{
+		m_1_speedX = -1 *(rand()%10+1);
+		if (m_1_speedX == 0) m_1_speedX = -1;
+		
+	};
+
+	if ( m_1_posX < left)
+	{
+		m_1_speedX = rand() % 10 + 1;
+		if (m_1_speedX == 0) m_1_speedX = 1;
+
+	};
+
+
+	if (m_1_posY > bottom )
+	{
+		m_1_speedY = -1 * (rand() % 10 + 1);
+		if (m_1_speedY == 0) m_1_speedY = -1;
+	};
+
+	if ( m_1_posY < top)
+	{
+		m_1_speedY = rand() % 10 + 1;
+		if (m_1_speedY == 0) m_1_speedY = 1;
+	};
+
+	if (m_2_posX > right ) 
+	{
+		m_2_speedX = -1 * (rand() % 10 + 1);
+		if (m_2_speedX == 0) m_2_speedX = -1;
+	};
+
+	if ( m_2_posX < left)
+	{
+		m_2_speedX = rand() % 10 + 1;
+		if (m_2_speedX == 0) m_2_speedX = 1;
+	};
+
+	if (m_2_posY > bottom ) 
+	{
+		m_2_speedY = -1 * (rand() % 10 + 1);
+		if (m_2_speedY == 0) m_2_speedY = -1;
+	};
+
+	if ( m_2_posY < top)
+	{
+		m_2_speedY = rand() % 10 + 1;
+		if (m_2_speedY == 0) m_2_speedY = 1;
+	};
+
+	m_Lignes[m_pointeur_ligne].point_1 = m_1_posX;
+	m_Lignes[m_pointeur_ligne].point_2 = m_1_posY;
+	m_Lignes[m_pointeur_ligne].point_3 = m_2_posX;
+	m_Lignes[m_pointeur_ligne].point_4 = m_2_posY;
+
+	m_pointeur_ligne++;
+	   
+	if (m_pointeur_ligne > m_iNombreEcho)
+		m_pointeur_ligne = 0;
+
+	InvalidateRect(&lpRect, bErase);
 
 	UpdateData(FALSE);
 
