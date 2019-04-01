@@ -185,6 +185,17 @@ void CTimer_13avril2018Dlg::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
 
+
+	COLORREF couleur;
+	couleur = (100, 255, 0);
+	
+	
+	CPen crayon_rouge, crayon_blanc;
+	crayon_rouge.CreatePen(PS_SOLID, 1, RGB(255, 0, 0));  // noir
+	crayon_blanc.CreatePen(PS_SOLID, 1, RGB(255, 255, 255));  //blanc
+
+
+
 	if (IsIconic())
 	{
 		//CPaintDC dc(this); // device context for painting
@@ -210,20 +221,29 @@ void CTimer_13avril2018Dlg::OnPaint()
 	{
 
 		int i = 0;
-		
-		
-		m_pointeur_ligne++;
+		dc.SelectObject(crayon_rouge);
+		bool boucle_terminee = false;
 
-		if (m_pointeur_ligne > m_iNombreEcho)
-			m_pointeur_ligne = 0;
+		i= m_pointeur_ligne;
 
-
-		for (i = 0; i <= m_iNombreEcho; i++)
+		while (!boucle_terminee)
 		{
-
+			
 			dc.MoveTo(m_Lignes[i].point_1, m_Lignes[i].point_2);
 			dc.LineTo(m_Lignes[i].point_3, m_Lignes[i].point_4);
+
+			i = i + 1;
+			
+			if (i > m_iNombreEcho)
+				i = 0;
+
+			if (i == m_pointeur_ligne)
+				boucle_terminee = true;
+			
+		
+
 		};
+		
 		
 
 		
@@ -246,9 +266,9 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 {
 	// TODO: Add your control notification handler code here
 
-	bottom = 762;
+	bottom = 862;
 	left = 220;
-	right = 1130;
+	right = 1530;
 	top = 95;
 	
 	
