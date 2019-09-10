@@ -44,8 +44,8 @@ public:
 
 	CString m_sCount;
 	
-	int m_iInterval;
-	int m_iCount;
+	int m_iInterval=50;
+	int m_iCount=10;
 	afx_msg void OnChangeEinterval();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 

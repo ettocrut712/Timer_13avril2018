@@ -52,7 +52,7 @@ END_MESSAGE_MAP()
 
 
 
-CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent /*=NULL*/)
+CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent )
 	: CDialogEx(IDD_TIMER_13AVRIL2018_DIALOG, pParent)
 	, m_sCount(_T(""))
 
@@ -137,11 +137,11 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 	
 	
 
-	m_paintDlg.ShowWindow(SW_SHOW);
+	//m_paintDlg.ShowWindow(SW_SHOW);
 	
 
 
-	m_iInterval = 10;
+	m_iInterval = 20;
 
 	m_1_posX = (left + right) / 2 + m_1_speedX;
 	m_1_posY = (top + bottom) / 2 + m_1_speedY;
