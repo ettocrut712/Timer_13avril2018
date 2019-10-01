@@ -5,7 +5,8 @@
 #pragma once
 #include "afxwin.h"
 #include "CPaintDlg.h"
-
+#include "Etoile.h"
+#include <array>;
 
 
 
@@ -64,7 +65,7 @@ public:
 	afx_msg void OnEnChangeEnombreEcho();
 	int m_iNombreEcho;
 	afx_msg void OnEnChangeEnombreEtoile();
-	int m_iNombreEtoile;
+	int m_iNombreEtoile, m_iOldNombreEtoile;
 	CPaintDlg m_paintDlg;
 
 	struct ligne 
@@ -77,10 +78,14 @@ public:
 
 	int top, bottom, left, right;
 	
-	
+		
+	CEtoile* m_starArray[100];
+
 
 	ligne m_Lignes[100];
 
 	int m_pointeur_ligne =0;
 
+//	CButton m_multi_lien;
+	BOOL m_multi_lien;
 };

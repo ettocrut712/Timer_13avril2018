@@ -44,8 +44,8 @@ void CEtoile::InitPosition(int posX, int posY)
 {
 	// positionne le point de départ au centre de l'aire pour débuter.  Versions futures, la position sera déterminée ailleurs...
 
-	m_positionX = (m_maxX - m_minX) / 2 + m_minX;
-	m_positionY = (m_maxY - m_minY) / 2 + m_minY;
+	m_positionX = posX;
+	m_positionY = posY;
 }
 
 
@@ -65,12 +65,14 @@ void CEtoile::CalculePosition()
 	if (m_positionX > m_maxX || m_positionX < m_minX)
 
 	{
+		m_positionX -= m_Vx;
 		RebonditX();
 
 	}
 
 	if (m_positionY > m_maxY || m_positionY < m_minY)
 	{
+		m_positionY -= m_Vy;
 		RebonditY();
 
 	}
@@ -88,10 +90,12 @@ void CEtoile::RebonditX()
 	if (m_Vx > 0)
 	{
 		m_Vx = -1 * rand() % 20;
+		if (m_Vx == 0)m_Vx = -1;
 	}
 	else
 	{
 		m_Vx = rand() % 20; 
+		if (m_Vx == 0)m_Vx = 1;
 	}
 }
 
@@ -102,10 +106,13 @@ void CEtoile::RebonditY()
 	if (m_Vy > 0)
 	{
 		m_Vy = -1 * rand() % 20;
+		if (m_Vy == 0)m_Vy = -1;
 	}
 	else
 	{
 		m_Vy = rand() % 20;
+		if (m_Vy == 0)m_Vy = 1;
 	}
+
 
 }
