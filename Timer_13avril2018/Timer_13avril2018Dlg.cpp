@@ -6,6 +6,7 @@
 #include "Timer_13avril2018.h"
 #include "Timer_13avril2018Dlg.h"
 #include "afxdialogex.h"
+#include "Etoile.h"
 //test
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -13,6 +14,9 @@
 
 
 // CAboutDlg dialog used for App About
+
+
+
 
 class CAboutDlg : public CDialogEx
 {
@@ -49,7 +53,7 @@ END_MESSAGE_MAP()
 
 
 
-CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent /*=NULL*/)
+CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent )
 	: CDialogEx(IDD_TIMER_13AVRIL2018_DIALOG, pParent)
 	, m_sCount(_T(""))
 
@@ -63,6 +67,9 @@ CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent /*=NULL*/)
 	, m_1_speedY(0)
 	, m_2_speedX(0)
 	, m_2_speedY(0)
+	, m_iNombreEcho(0)
+	, m_iNombreEtoile(0)
+	, m_multi_lien(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -78,6 +85,10 @@ void CTimer_13avril2018Dlg::DoDataExchange(CDataExchange* pDX)
 
 	DDX_Text(pDX, IDC_EINTERVAL, m_iInterval);
 	DDV_MinMaxInt(pDX, m_iInterval, 0, 10000);
+	DDX_Text(pDX, IDC_ENOMBRE_ECHO, m_iNombreEcho);
+	DDX_Text(pDX, IDC_ENOMBRE_ETOILE, m_iNombreEtoile);
+	DDV_MinMaxInt(pDX, m_iNombreEtoile, 1, 100);
+	DDX_Check(pDX, IDC_CHECK_MULTI_LIEN, m_multi_lien);
 }
 
 BEGIN_MESSAGE_MAP(CTimer_13avril2018Dlg, CDialogEx)
@@ -88,6 +99,8 @@ BEGIN_MESSAGE_MAP(CTimer_13avril2018Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_STOPBUTTON, &CTimer_13avril2018Dlg::OnBnClickedStopbutton)
 	ON_EN_CHANGE(IDC_EINTERVAL, &CTimer_13avril2018Dlg::OnChangeEinterval)
 	ON_WM_TIMER()
+	ON_EN_CHANGE(IDC_ENOMBRE_ECHO, &CTimer_13avril2018Dlg::OnEnChangeEnombreEcho)
+	ON_EN_CHANGE(IDC_ENOMBRE_ETOILE, &CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile)
 END_MESSAGE_MAP()
 
 
@@ -124,18 +137,32 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 
-	m_iInterval = 10;
+	
+	
 
-	m_1_posX = 511;
-	m_1_posY = 522;
+	//m_paintDlg.ShowWindow(SW_SHOW);
+	
 
-	m_2_posX = 511;
-	m_2_posY = 521;
+
+	m_iInterval = 20;
+
+	m_1_posX = (left + right) / 2 + m_1_speedX;
+	m_1_posY = (top + bottom) / 2 + m_1_speedY;
+
+	m_2_posX = (left + right) / 2 + m_2_speedX;
+	m_2_posY = (top + bottom) / 2 + m_2_speedY;
 
 	m_1_speedX = 5;
 	m_1_speedY = 6;
 	m_2_speedX = 7;
 	m_2_speedY = 8;
+
+
+	// nouveau code qui fonctionne avec constellation et CEtoile
+	m_iNombreEcho = 1;
+	m_iNombreEtoile = 0;
+	m_iOldNombreEtoile = m_iNombreEtoile;
+	m_multi_lien = FALSE;
 
 	UpdateData(FALSE);
 
@@ -161,9 +188,22 @@ void CTimer_13avril2018Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 void CTimer_13avril2018Dlg::OnPaint()
 {
+	CPaintDC dc(this); // device context for painting
+
+
+	COLORREF couleur;
+	couleur = (100, 255, 0);
+	
+	
+	CPen crayon_rouge, crayon_blanc;
+	crayon_rouge.CreatePen(PS_SOLID, 1, RGB(255, 0, 0));  // noir
+	crayon_blanc.CreatePen(PS_SOLID, 1, RGB(255, 255, 255));  //blanc
+
+
+
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // device context for painting
+		//CPaintDC dc(this); // device context for painting
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
@@ -176,12 +216,93 @@ void CTimer_13avril2018Dlg::OnPaint()
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
 		// Draw the icon
-		dc.DrawIcon(x, y, m_hIcon);
+
+
+
+
+
 	}
 	else
 	{
+
+		int i = 0;
+		dc.SelectObject(crayon_rouge);
+		bool boucle_terminee = false;
+
+		i = m_pointeur_ligne;
+
+		for (int id = 0; id < m_iNombreEtoile - 1; id++)
+		{
+
+			m_Lignes[1].point_1 = m_starArray[id]->m_positionX;
+			m_Lignes[1].point_2 = m_starArray[id]->m_positionY;
+
+			dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
+
+			if (m_multi_lien)
+			{
+				for (int id2 = id; id2 < m_iNombreEtoile; id2++)
+				{
+					//m_Lignes[1].point_3 = m_starArray[id + 1]->m_positionX;
+					//m_Lignes[1].point_4 = m_starArray[id + 1]->m_positionY;
+
+					m_Lignes[1].point_3 = m_starArray[id2]->m_positionX;
+					m_Lignes[1].point_4 = m_starArray[id2]->m_positionY;
+
+					dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
+
+					dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
+				};
+			}
+			else
+			{
+				m_Lignes[1].point_3 = m_starArray[id + 1]->m_positionX;
+				m_Lignes[1].point_4 = m_starArray[id + 1]->m_positionY;
+				dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
+
+
+			};
+		};
+
+		if (m_iNombreEtoile > 0)
+		{
+		
+		m_Lignes[1].point_1 = m_starArray[0]->m_positionX;
+		m_Lignes[1].point_2 = m_starArray[0]->m_positionY;
+		dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
+		m_Lignes[1].point_3 = m_starArray[(m_iNombreEtoile - 1)]->m_positionX;
+		m_Lignes[1].point_4 = m_starArray[(m_iNombreEtoile - 1)]->m_positionY;
+		dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
+
+		};
+
+
+		/*
+		while (!boucle_terminee)
+		{
+
+			dc.MoveTo(m_Lignes[i].point_1, m_Lignes[i].point_2);
+			dc.LineTo(m_Lignes[i].point_3, m_Lignes[i].point_4);
+
+			i = i + 1;
+
+			if (i > m_iNombreEcho)
+				i = 0;
+
+			if (i == m_pointeur_ligne)
+				boucle_terminee = true;
+
+
+
+		};
+		*/
+
+
+
+
+
 		CDialogEx::OnPaint();
-	}
+	};
 }
 
 // The system calls this function to obtain the cursor to display while the user drags
@@ -197,11 +318,70 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 {
 	// TODO: Add your control notification handler code here
 
+	bottom = 800;
+	left = 220;
+	right = 1530;
+	top = 95;
+	int posX, posY, Vx, Vy;
+	
+	srand(time(NULL));
+
+	
+
 	UpdateData(TRUE);
+
+
+
+	if (m_iNombreEtoile > m_iOldNombreEtoile)
+	{
+		for (int id = m_iOldNombreEtoile; id < m_iNombreEtoile; id++)
+		{
+
+			m_starArray[id] = new CEtoile;
+			m_starArray[id]->m_iID = id;
+
+
+			posX = (left + right) / 2;
+			posY = (top + bottom) / 2;
+			m_starArray[id]->InitPosition(posX, posY);
+
+			Vx = (rand() % 10 + 1);
+			Vy = (rand() % 10 + 1);
+			m_starArray[id]->SetVitesse(Vx, Vy);
+
+			m_starArray[id]->SetLimites(right, bottom, left, top);
+
+
+
+		};
+
+		m_iOldNombreEtoile = m_iNombreEtoile;
+	};
+
+	if (m_iNombreEtoile < m_iOldNombreEtoile)
+	{
+		for (int id = (m_iOldNombreEtoile-1) ; id > (m_iNombreEtoile-1); id--)
+		{
+			delete m_starArray[id];
+			
+
+		};
+			 
+		m_iOldNombreEtoile = m_iNombreEtoile;
+	};
+
+	
+	
+
+
 	m_iCount = 0;
 	
 	m_sCount.Format(_T("%d"), m_iCount);
+	m_1_posX = (left+right)/2 + m_1_speedX;
+	m_1_posY = (top + bottom)/2 +m_1_speedY;
 
+	m_2_posX = (left+right)/2 +m_2_speedX;
+	m_2_posY = (top+bottom)/2 + m_2_speedY;
 
 	UpdateData(FALSE);
 
@@ -231,38 +411,77 @@ void CTimer_13avril2018Dlg::OnChangeEinterval()
 	UpdateData(TRUE);
 }
 
-
+//test
 void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: Add your message handler code here and/or call default
 
 	m_iCount++;
 
+	
+
 	m_sCount.Format(_T("%d"), m_iCount);
 
 	CClientDC dc(this);
-
-
-	Invalidate();
-	UpdateWindow();
-
+	bool bErase = TRUE;
 	
-	dc.MoveTo(m_1_posX, m_1_posY);
-	dc.LineTo(m_2_posX, m_2_posY);
+	RECT lpRect;
 
-	m_1_posX += m_1_speedX;
-	m_1_posY += m_1_speedY;
+	lpRect.bottom = bottom;
+	lpRect.left = left;
+	lpRect.right = right;
+	lpRect.top = top;
 
-	m_2_posX += m_2_speedX;
-	m_2_posY += m_2_speedY;
+	UpdateData(TRUE);
 
-	if (m_1_posX > 1491 || m_1_posX < 330) m_1_speedX = -1 * m_1_speedX;
-	if (m_1_posY > 900 || m_1_posY < 110) m_1_speedY = -1 * m_1_speedY;
-	if (m_2_posX > 1490 || m_2_posX < 330) m_2_speedX = -1 * m_2_speedX;
-	if (m_2_posY > 900 || m_2_posY < 110) m_2_speedY = -1 * m_2_speedY;
+	for (int id = 0; id < m_iNombreEtoile; id++)
+	{
+
+		m_starArray[id]->CalculePosition();
+
+
+
+
+
+	};
+	
+
+
+	InvalidateRect(&lpRect, bErase);
 
 	UpdateData(FALSE);
 
 
 	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+void CTimer_13avril2018Dlg::OnEnChangeEnombreEcho()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+
+	UpdateData(TRUE);
+	
+
+
+}
+
+
+void CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+
+	UpdateData(TRUE);
+
+	
 }
