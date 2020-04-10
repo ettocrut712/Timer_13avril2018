@@ -53,10 +53,12 @@ END_MESSAGE_MAP()
 
 
 
-CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent )
+CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent)
 	: CDialogEx(IDD_TIMER_13AVRIL2018_DIALOG, pParent)
 	, m_sCount(_T(""))
-
+	,bottom(0)
+	,left (0)
+	,m_iOldNombreEtoile(0)
 	, m_iInterval(0)
 	, m_iCount(0)
 	, m_1_posX(0)
@@ -70,6 +72,10 @@ CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent )
 	, m_iNombreEcho(0)
 	, m_iNombreEtoile(0)
 	, m_multi_lien(FALSE)
+	, m_str_right(_T(""))
+	, m_str_bottom(_T(""))
+	, m_largeur(_T(""))
+	, m_hauteur(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -84,11 +90,15 @@ void CTimer_13avril2018Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATICCOUNT, m_sCount);
 
 	DDX_Text(pDX, IDC_EINTERVAL, m_iInterval);
-	DDV_MinMaxInt(pDX, m_iInterval, 0, 10000);
+	DDV_MinMaxInt(pDX, m_iInterval, 10, 10000);
 	DDX_Text(pDX, IDC_ENOMBRE_ECHO, m_iNombreEcho);
 	DDX_Text(pDX, IDC_ENOMBRE_ETOILE, m_iNombreEtoile);
 	DDV_MinMaxInt(pDX, m_iNombreEtoile, 1, 100);
 	DDX_Check(pDX, IDC_CHECK_MULTI_LIEN, m_multi_lien);
+	DDX_Text(pDX, IDC_EDIT_RIGHT, m_str_right);
+	DDX_Text(pDX, IDC_EDIT_BOTTOM, m_str_bottom);
+	//DDX_Text(pDX, IDC_largeur, m_largeur);
+	//DDX_Text(pDX, IDC_hauteur, m_hauteur);
 }
 
 BEGIN_MESSAGE_MAP(CTimer_13avril2018Dlg, CDialogEx)
@@ -138,13 +148,34 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 	// TODO: Add extra initialization here
 
 	
+	CRect rect;
+	this->GetClientRect(rect);
+	m_str_bottom.Format(_T("%d"), rect.bottom);
+	oldBottom = rect.bottom;  //utilise pour verifier si les dimensions de la fenetre ont change
+
+	m_str_right.Format(_T("%d"), rect.right);
+	oldRight = rect.right;	//utilise pour verifier si les dimensions de la fenetre ont change
+
 	
 
 	//m_paintDlg.ShowWindow(SW_SHOW);
 	
+	bottom = 0.9*rect.bottom;
+	
+	
+	left = 0.2* rect.right;
+	
+	right = 0.9* rect.right;
+	
+
+	top = 0.1*rect.bottom;
+
+	CPaintDC dc(this); // device context for painting
 
 
-	m_iInterval = 20;
+
+
+	m_iInterval = 80;
 
 	m_1_posX = (left + right) / 2 + m_1_speedX;
 	m_1_posY = (top + bottom) / 2 + m_1_speedY;
@@ -158,11 +189,34 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 	m_2_speedY = 8;
 
 
-	// nouveau code qui fonctionne avec constellation et CEtoile
+	m_iNombreEtoile = 2;
 	m_iNombreEcho = 1;
-	m_iNombreEtoile = 0;
-	m_iOldNombreEtoile = m_iNombreEtoile;
+	
+	UpdateData(FALSE);
+
+	for (int id = 0; id < m_iNombreEtoile; id++)
+	{
+
+		m_starArray[id] = new CEtoile;
+		m_starArray[id]->m_iID = id;
+
+		m_starArray[id]->InitEcho(m_iNombreEcho);
+
+		m_starArray[id]->InitPosition(m_1_posX, m_1_posY);
+
+		m_1_speedX = (rand() % 10 + 1);
+		m_1_speedY = (rand() % 10 + 1);
+
+		m_starArray[id]->SetVitesse(m_1_speedX, m_1_speedY);
+
+		m_starArray[id]->SetLimites(right, bottom, left, top);
+
+
+
+	};
+
 	m_multi_lien = FALSE;
+	m_pointeur_echo = 0;  // pointe vers la premiere case du vecteur pour l'echo actif initialement.
 
 	UpdateData(FALSE);
 
@@ -196,7 +250,28 @@ void CTimer_13avril2018Dlg::OnPaint()
 	
 	
 	CPen crayon_rouge, crayon_blanc;
-	crayon_rouge.CreatePen(PS_SOLID, 1, RGB(255, 0, 0));  // noir
+
+	CPen crayon[10];
+
+	crayon[0].CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+	crayon[1].CreatePen(PS_SOLID, 1, RGB(25, 25, 0));
+	crayon[2].CreatePen(PS_SOLID, 1, RGB(50, 50, 25));
+	crayon[3].CreatePen(PS_SOLID, 1, RGB(50, 75, 50));
+	crayon[4].CreatePen(PS_SOLID, 1, RGB(125, 100, 50));
+	crayon[5].CreatePen(PS_SOLID, 1, RGB(125, 100, 75));
+	crayon[6].CreatePen(PS_SOLID, 1, RGB(100, 155, 155));
+	crayon[7].CreatePen(PS_SOLID, 1, RGB(180, 180, 100));
+	crayon[8].CreatePen(PS_SOLID, 1, RGB(205, 180, 205));
+	crayon[9].CreatePen(PS_SOLID, 1, RGB(230, 180, 230));
+	
+
+
+
+
+
+
+
+	crayon_rouge.CreatePen(PS_SOLID, 1, RGB(255, 0, 0));  // rouge
 	crayon_blanc.CreatePen(PS_SOLID, 1, RGB(255, 255, 255));  //blanc
 
 
@@ -218,90 +293,100 @@ void CTimer_13avril2018Dlg::OnPaint()
 		// Draw the icon
 
 
-
-
-
 	}
 	else
 	{
 
-		int i = 0;
-		dc.SelectObject(crayon_rouge);
+		int i, echoNum = 0;
+		int pointeurCrayon = 0;
+		int pointeurEcho = 0;
+
+		dc.SelectObject(crayon_rouge);  // dessine le cadre rouge
+
+		dc.MoveTo(left, top);
+
+		dc.LineTo(right, top);
+		dc.LineTo(right, bottom);
+		dc.LineTo(left, bottom);
+		dc.LineTo(left, top);
+
+
+
+
 		bool boucle_terminee = false;
+		
+		m_PenPointer++;
 
-		i = m_pointeur_ligne;
+		if (m_PenPointer > 9) m_PenPointer = 0;
 
-		for (int id = 0; id < m_iNombreEtoile - 1; id++)
+		pointeurCrayon = 0 ;
+
+		for (echoNum = 0; echoNum < m_iNombreEcho; echoNum++)
 		{
 
-			m_Lignes[1].point_1 = m_starArray[id]->m_positionX;
-			m_Lignes[1].point_2 = m_starArray[id]->m_positionY;
-
-			dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
-
-			if (m_multi_lien)
+			
+			if (echoNum <= (m_pointeur_echo-1))    //m_pointer_echo pointe vers le prochain echo. Pour l'echo actif (echo zéro), il faut soustraire "1".
 			{
-				for (int id2 = id; id2 < m_iNombreEtoile; id2++)
-				{
-					//m_Lignes[1].point_3 = m_starArray[id + 1]->m_positionX;
-					//m_Lignes[1].point_4 = m_starArray[id + 1]->m_positionY;
+				
+				pointeurCrayon = (m_pointeur_echo-1) - echoNum;
+			}
 
-					m_Lignes[1].point_3 = m_starArray[id2]->m_positionX;
-					m_Lignes[1].point_4 = m_starArray[id2]->m_positionY;
+			else
+			{
+				pointeurCrayon = m_iNombreEcho - (echoNum - (m_pointeur_echo-1));  // m_iNombreEcho limité à 9 (9 quand calculé à partir de zéro) est le nombre max de couleur pour le moment.
 
-					dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
+			};
 
-					dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
-				};
+			if (pointeurCrayon < 9) 
+			{
+				dc.SelectObject(crayon[pointeurCrayon]);
 			}
 			else
 			{
-				m_Lignes[1].point_3 = m_starArray[id + 1]->m_positionX;
-				m_Lignes[1].point_4 = m_starArray[id + 1]->m_positionY;
-				dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
-
-
+				pointeurCrayon = 0;
+				dc.SelectObject(crayon[pointeurCrayon]);
 			};
-		};
 
-		if (m_iNombreEtoile > 0)
-		{
+			//if(m_pointeur_echo == echoNum) dc.SelectObject(crayon_rouge);
+
+			
+
+			
+
+			for (int id = 0; id < (m_iNombreEtoile - 1); id++)
+			{
+
+				m_Lignes[1].point_1 = m_starArray[id]->m_positionX[echoNum];  
+				m_Lignes[1].point_2 = m_starArray[id]->m_positionY[echoNum];
+
+				dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
+
+				if (m_multi_lien)
+				{
+					for (int id2 = id; id2 < m_iNombreEtoile; id2++)
+					{
+						
+						m_Lignes[1].point_3 = m_starArray[id2]->m_positionX[echoNum];
+						m_Lignes[1].point_4 = m_starArray[id2]->m_positionY[echoNum];
+
+						dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
+
+						dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
+					};
+				}
+				else
+				{
+					m_Lignes[1].point_3 = m_starArray[id + 1]->m_positionX[echoNum];
+					m_Lignes[1].point_4 = m_starArray[id + 1]->m_positionY[echoNum];
+					dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
+
+
+				};
+			};
+
+		};
 		
-		m_Lignes[1].point_1 = m_starArray[0]->m_positionX;
-		m_Lignes[1].point_2 = m_starArray[0]->m_positionY;
-		dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
-		m_Lignes[1].point_3 = m_starArray[(m_iNombreEtoile - 1)]->m_positionX;
-		m_Lignes[1].point_4 = m_starArray[(m_iNombreEtoile - 1)]->m_positionY;
-		dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
-
-		};
-
-
-		/*
-		while (!boucle_terminee)
-		{
-
-			dc.MoveTo(m_Lignes[i].point_1, m_Lignes[i].point_2);
-			dc.LineTo(m_Lignes[i].point_3, m_Lignes[i].point_4);
-
-			i = i + 1;
-
-			if (i > m_iNombreEcho)
-				i = 0;
-
-			if (i == m_pointeur_ligne)
-				boucle_terminee = true;
-
-
-
-		};
-		*/
-
-
-
-
-
-		CDialogEx::OnPaint();
+	CDialogEx::OnPaint();
 	};
 }
 
@@ -318,59 +403,34 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 {
 	// TODO: Add your control notification handler code here
 
-	bottom = 800;
-	left = 220;
-	right = 1530;
-	top = 95;
-	int posX, posY, Vx, Vy;
 	
+	int posX, posY, Vx, Vy;
+	int oldEchoNombre;
+
+	oldEchoNombre = m_iNombreEcho;			// sauvegarde vieille valeur du nombre d'Echo...
+
 	srand(time(NULL));
 
 	
 
-	UpdateData(TRUE);
-
-
-
-	if (m_iNombreEtoile > m_iOldNombreEtoile)
-	{
-		for (int id = m_iOldNombreEtoile; id < m_iNombreEtoile; id++)
-		{
-
-			m_starArray[id] = new CEtoile;
-			m_starArray[id]->m_iID = id;
-
-
-			posX = (left + right) / 2;
-			posY = (top + bottom) / 2;
-			m_starArray[id]->InitPosition(posX, posY);
-
-			Vx = (rand() % 10 + 1);
-			Vy = (rand() % 10 + 1);
-			m_starArray[id]->SetVitesse(Vx, Vy);
-
-			m_starArray[id]->SetLimites(right, bottom, left, top);
-
-
-
-		};
-
-		m_iOldNombreEtoile = m_iNombreEtoile;
-	};
-
-	if (m_iNombreEtoile < m_iOldNombreEtoile)
-	{
-		for (int id = (m_iOldNombreEtoile-1) ; id > (m_iNombreEtoile-1); id--)
-		{
-			delete m_starArray[id];
-			
-
-		};
-			 
-		m_iOldNombreEtoile = m_iNombreEtoile;
-	};
+	UpdateData(TRUE);						// lit les parametres du dialogue.
 
 	
+	
+	if (m_iNombreEcho > 19) m_iNombreEcho = 19;
+	if (m_iNombreEtoile > 99) m_iNombreEtoile = 99;
+
+	if (m_iNombreEcho != oldEchoNombre)
+	{
+
+		for (int id = 0; id < m_iNombreEtoile; id++)
+		{
+			m_starArray[id]->InitEcho(m_iNombreEcho);
+
+			
+		};
+
+	};
 	
 
 
@@ -408,46 +468,95 @@ void CTimer_13avril2018Dlg::OnChangeEinterval()
 
 	
 
-	UpdateData(TRUE);
+	//UpdateData(TRUE);
+
+	
 }
 
 //test
 void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: Add your message handler code here and/or call default
+	RECT rectToRedraw;
+	//WINDOWPLACEMENT winPlace;
+	CClientDC dc(this);
+	CRect rect;
+
+	bool bErase = TRUE;
 
 	m_iCount++;
 
-	
+	int	oldEcho = m_iNombreEcho;
 
 	m_sCount.Format(_T("%d"), m_iCount);
 
-	CClientDC dc(this);
-	bool bErase = TRUE;
+	//this->GetWindowPlacement(&winPlace);
+
+
 	
-	RECT lpRect;
+	this->GetClientRect(rect);
 
-	lpRect.bottom = bottom;
-	lpRect.left = left;
-	lpRect.right = right;
-	lpRect.top = top;
 
+
+	m_str_bottom.Format(_T("%d"), rect.bottom);
+	m_str_right.Format(_T("%d"), rect.right);
+
+	if (rect.bottom != oldBottom || rect.right != oldRight)
+	{
+		rectToRedraw.bottom = rect.bottom;
+		rectToRedraw.right = rect.right;
+		rectToRedraw.left = rect.left;
+		rectToRedraw.top = rect.top;
+
+		bottom = 0.9 * rect.bottom;
+		left = 0.2 * rect.right;
+		right = 0.9 * rect.right;
+		top = 0.1 * rect.bottom;
+
+		oldBottom = rect.bottom;
+		oldRight = rect.right;
+
+		for (int id = 0; id < m_iNombreEtoile; id++)
+		{
+
+			m_starArray[id]->SetLimites(right, bottom, left, top);
+
+
+
+		};
+	}
+	else {
+	
+		rectToRedraw.bottom = bottom;
+		rectToRedraw.right = right;
+		rectToRedraw.left = left;
+		rectToRedraw.top = top;
+	
+	};
+
+	UpdateData(FALSE);
 	UpdateData(TRUE);
+
+	
 
 	for (int id = 0; id < m_iNombreEtoile; id++)
 	{
 
-		m_starArray[id]->CalculePosition();
-
-
-
-
+		m_starArray[id]->CalculePosition(m_pointeur_echo);
 
 	};
 	
+	m_pointeur_echo++;
+	if (m_pointeur_echo >= m_iNombreEcho) m_pointeur_echo = 0;
 
 
-	InvalidateRect(&lpRect, bErase);
+	
+	/*rectToRedraw.bottom = bottom;
+	rectToRedraw.right = right;
+	rectToRedraw.left = left;
+	rectToRedraw.top = top;*/
+
+	InvalidateRect(&rectToRedraw, bErase);
 
 	UpdateData(FALSE);
 
@@ -465,9 +574,23 @@ void CTimer_13avril2018Dlg::OnEnChangeEnombreEcho()
 
 	// TODO:  Add your control notification handler code here
 
-	UpdateData(TRUE);
+	int oldEcho = m_iNombreEcho;
 	
+	UpdateData(TRUE);
 
+	if (m_iNombreEcho > 19) m_iNombreEcho = 19;
+
+	if (oldEcho != m_iNombreEcho)
+	{
+		for (int id = 0; id < m_iNombreEtoile; id++)
+		{
+
+			m_starArray[id]->InitEcho(m_iNombreEcho);
+
+
+		};
+
+	};
 
 }
 
@@ -481,7 +604,53 @@ void CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile()
 
 	// TODO:  Add your control notification handler code here
 
+	int posX, posY, Vx, Vy;
+
+	m_iOldNombreEtoile = m_iNombreEtoile;
+
 	UpdateData(TRUE);
 
+	if (m_iNombreEtoile > 99) m_iNombreEtoile = 99;
+
+	if (m_iNombreEtoile > m_iOldNombreEtoile)
+	{
+		for (int id = m_iOldNombreEtoile; id < m_iNombreEtoile; id++)
+		{
+
+			m_starArray[id] = new CEtoile;
+			m_starArray[id]->m_iID = id;
+
+			m_starArray[id]->InitEcho(m_iNombreEcho);
+
+			posX = (left + right) / 2;
+			posY = (top + bottom) / 2;
+
+			m_starArray[id]->InitPosition(posX, posY);
+
+			Vx = (rand() % 10 + 1);
+			Vy = (rand() % 10 + 1);
+
+			m_starArray[id]->SetVitesse(Vx, Vy);
+
+			m_starArray[id]->SetLimites(right, bottom, left, top);
+
+
+
+		};
+
+		
+	};
+
+	if (m_iNombreEtoile < m_iOldNombreEtoile)
+	{
+		for (int id = (m_iOldNombreEtoile - 1); id > (m_iNombreEtoile - 1); id--)
+		{
+			delete m_starArray[id];
+
+
+		};
+
+		
+	};
 	
 }

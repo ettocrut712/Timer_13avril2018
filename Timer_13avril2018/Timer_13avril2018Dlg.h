@@ -54,7 +54,7 @@ private:
 	
 
 public:
-	int m_1_posX;
+	int m_1_posX;									//positions et vitesses des points
 	int m_1_posY;
 	int m_2_posX;
 	int m_2_posY;
@@ -63,9 +63,12 @@ public:
 	int m_2_speedX;
 	int m_2_speedY;
 	afx_msg void OnEnChangeEnombreEcho();
-	int m_iNombreEcho;
+	int m_iNombreEcho;								//nombre d'echo qui seront retenus pour afficher...		
 	afx_msg void OnEnChangeEnombreEtoile();
-	int m_iNombreEtoile, m_iOldNombreEtoile;
+
+	int m_iNombreEtoile, m_iOldNombreEtoile =0;
+	int m_PenPointer=0;
+
 	CPaintDlg m_paintDlg;
 
 	struct ligne 
@@ -76,16 +79,21 @@ public:
 		int point_4;
 	};
 
-	int top, bottom, left, right;
+	int top, bottom, left, right, oldRight, oldBottom =0;
 	
 		
 	CEtoile* m_starArray[100];
 
 
-	ligne m_Lignes[100];
+	ligne m_Lignes[5] = { 0 };
 
 	int m_pointeur_ligne =0;
+	int m_pointeur_echo = 0; // indique quel est l'écho actif.
 
 //	CButton m_multi_lien;
 	BOOL m_multi_lien;
+	CString m_str_right;
+	CString m_str_bottom;
+	CString m_largeur;
+	CString m_hauteur;
 };
