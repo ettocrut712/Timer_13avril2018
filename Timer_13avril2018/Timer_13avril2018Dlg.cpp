@@ -182,17 +182,17 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 
 	m_2_posX = (left + right) / 2 + m_2_speedX;
 	m_2_posY = (top + bottom) / 2 + m_2_speedY;
-
+	
 	m_1_speedX = 5;
 	m_1_speedY = 6;
 	m_2_speedX = 7;
 	m_2_speedY = 8;
 
-
 	m_iNombreEtoile = 2;
 	m_iNombreEcho = 1;
 	
 	UpdateData(FALSE);
+	srand(time(NULL));
 
 	for (int id = 0; id < m_iNombreEtoile; id++)
 	{
@@ -490,16 +490,10 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 
 	m_sCount.Format(_T("%d"), m_iCount);
 
-	//this->GetWindowPlacement(&winPlace);
-
-
-	
 	this->GetClientRect(rect);
 
-
-
-	m_str_bottom.Format(_T("%d"), rect.bottom);
-	m_str_right.Format(_T("%d"), rect.right);
+	m_str_bottom.Format(_T("%d"), rect.bottom);				// m_str_...: affiche les dimensions dans le dialogue.
+	m_str_right.Format(_T("%d"), rect.right);				// m_str_...: affiche les dimensions dans le dialogue.
 
 	if (rect.bottom != oldBottom || rect.right != oldRight)
 	{
@@ -534,9 +528,13 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 	
 	};
 
-	UpdateData(FALSE);
+	
 	UpdateData(TRUE);
 
+	m_str_bottom.Format(_T("%d"), rect.bottom);				// m_str_...: affiche les dimensions dans le dialogue.
+	m_str_right.Format(_T("%d"), rect.right);				// m_str_...: affiche les dimensions dans le dialogue.
+
+	UpdateData(FALSE);
 	
 
 	for (int id = 0; id < m_iNombreEtoile; id++)
