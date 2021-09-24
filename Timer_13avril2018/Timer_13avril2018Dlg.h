@@ -6,7 +6,8 @@
 #include "afxwin.h"
 #include "CPaintDlg.h"
 #include "Etoile.h"
-#include <array>;
+#include <array>
+#include <math.h>
 
 
 
@@ -49,6 +50,10 @@ public:
 	int m_iCount=10;
 	afx_msg void OnChangeEinterval();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	void CalculeDistances(int echo, int debut, int fin);
+	void CalculeDistances_Thread(int echo, int debut, int fin, int numThreads);
+	void CalculeDistance_leader(int echo);
+	void InitDistances();
 
 private:
 	
@@ -56,12 +61,12 @@ private:
 public:
 	int m_1_posX;									//positions et vitesses des points
 	int m_1_posY;
-	int m_2_posX;
+
 	int m_2_posY;
-	int m_1_speedX;
-	int m_1_speedY;
-	int m_2_speedX;
-	int m_2_speedY;
+	float m_1_speedX;
+	float m_1_speedY;
+	float m_2_speedX;
+	float m_2_speedY;
 	afx_msg void OnEnChangeEnombreEcho();
 	int m_iNombreEcho;								//nombre d'echo qui seront retenus pour afficher...		
 	afx_msg void OnEnChangeEnombreEtoile();
@@ -90,10 +95,18 @@ public:
 	int m_pointeur_ligne =0;
 	int m_pointeur_echo = 0; // indique quel est l'écho actif.
 
-//	CButton m_multi_lien;
+
 	BOOL m_multi_lien;
 	CString m_str_right;
 	CString m_str_bottom;
 	CString m_largeur;
 	CString m_hauteur;
+
+	int m_distanceSecuritaire = 150;
+	CString m_distance_0_1;
+	CString m_angle_0_1;
+
+	CString m_angle_1_0;
+	BOOL m_dessineCercle;
+	BOOL m_dessineTriangle;
 };

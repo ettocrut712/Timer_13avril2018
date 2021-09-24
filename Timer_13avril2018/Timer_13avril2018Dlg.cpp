@@ -7,7 +7,17 @@
 #include "Timer_13avril2018Dlg.h"
 #include "afxdialogex.h"
 #include "Etoile.h"
-//test
+#include <cstring>
+
+#include <cstdlib>
+#include <numeric>
+#include <mutex>
+#include <thread>
+#include <vector>
+
+
+
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -63,7 +73,7 @@ CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent)
 	, m_iCount(0)
 	, m_1_posX(0)
 	, m_1_posY(0)
-	, m_2_posX(0)
+	//, m_2_posX(0)
 	, m_2_posY(0)
 	, m_1_speedX(0)
 	, m_1_speedY(0)
@@ -76,6 +86,11 @@ CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent)
 	, m_str_bottom(_T(""))
 	, m_largeur(_T(""))
 	, m_hauteur(_T(""))
+	, m_distance_0_1(_T(""))
+	, m_angle_0_1(_T(""))
+	, m_angle_1_0(_T(""))
+	, m_dessineCercle(FALSE)
+	, m_dessineTriangle(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -99,6 +114,12 @@ void CTimer_13avril2018Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_BOTTOM, m_str_bottom);
 	//DDX_Text(pDX, IDC_largeur, m_largeur);
 	//DDX_Text(pDX, IDC_hauteur, m_hauteur);
+	DDX_Text(pDX, IDC_DISTANCE, m_distance_0_1);
+	DDX_Text(pDX, IDC_ANGLE_0_1, m_angle_0_1);
+	//  DDX_Control(pDX, IDC_ANGLE_1_0, m_angle_1_0);
+	DDX_Text(pDX, IDC_ANGLE_1_0, m_angle_1_0);
+	DDX_Check(pDX, IDC_CHECK3, m_dessineCercle);
+	DDX_Check(pDX, IDC_CHECK2, m_dessineTriangle);
 }
 
 BEGIN_MESSAGE_MAP(CTimer_13avril2018Dlg, CDialogEx)
@@ -156,19 +177,19 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 	m_str_right.Format(_T("%d"), rect.right);
 	oldRight = rect.right;	//utilise pour verifier si les dimensions de la fenetre ont change
 
-	
+	srand(time(NULL));
 
 	//m_paintDlg.ShowWindow(SW_SHOW);
 	
-	bottom = 0.9*rect.bottom;
+	bottom = 0.95*rect.bottom;
 	
 	
 	left = 0.2* rect.right;
 	
-	right = 0.9* rect.right;
+	right = 0.95* rect.right;
 	
 
-	top = 0.1*rect.bottom;
+	top = 0.05*rect.bottom;
 
 	CPaintDC dc(this); // device context for painting
 
@@ -177,11 +198,11 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 
 	m_iInterval = 80;
 
-	m_1_posX = (left + right) / 2 + m_1_speedX;
-	m_1_posY = (top + bottom) / 2 + m_1_speedY;
+	m_1_posX = left +(rand() % (right-left)); //(left + right) / 2 + m_1_speedX;
+	m_1_posY = top + (rand() % (bottom-top)); //(top + bottom) / 2 + m_1_speedY;
 
-	m_2_posX = (left + right) / 2 + m_2_speedX;
-	m_2_posY = (top + bottom) / 2 + m_2_speedY;
+	//m_2_posX = (left + right) / 2 + m_2_speedX;
+	//m_2_posY = (top + bottom) / 2 + m_2_speedY;
 	
 	m_1_speedX = 5;
 	m_1_speedY = 6;
@@ -189,7 +210,8 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 	m_2_speedY = 8;
 
 	m_iNombreEtoile = 2;
-	m_iNombreEcho = 1;
+	m_iNombreEcho = 20;
+	m_dessineTriangle = TRUE;
 	
 	UpdateData(FALSE);
 	srand(time(NULL));
@@ -202,10 +224,13 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 
 		m_starArray[id]->InitEcho(m_iNombreEcho);
 
-		m_starArray[id]->InitPosition(m_1_posX, m_1_posY);
+		m_1_posX = left + (rand() % (right - left)); 
+		m_1_posY = top + (rand() % (bottom - top)); 
 
-		m_1_speedX = (rand() % 10 + 1);
-		m_1_speedY = (rand() % 10 + 1);
+		m_starArray[id]->InitPosition(m_1_posX, m_1_posY);
+		
+		m_1_speedX = 5; //(rand() % 10 + 1);
+		m_1_speedY = 5; //(rand() % 10 + 1);
 
 		m_starArray[id]->SetVitesse(m_1_speedX, m_1_speedY);
 
@@ -244,12 +269,15 @@ void CTimer_13avril2018Dlg::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
 
+	HDC offscreen = CreateCompatibleDC(NULL); // <- create the offscreen DC
+	HBITMAP bmp = CreateBitmap(right-left, bottom-top, 1, 8, NULL);
+	HBITMAP bmpold = (HBITMAP)SelectObject(offscreen, bmp); // <- put the bitmap in the dc
 
 	COLORREF couleur;
 	couleur = (100, 255, 0);
 	
 	
-	CPen crayon_rouge, crayon_blanc;
+	CPen crayon_rouge, crayon_blanc, crayon_noir, crayon_orange, crayon_vert, crayon_bleu, crayon_jaune;
 
 	CPen crayon[10];
 
@@ -273,8 +301,11 @@ void CTimer_13avril2018Dlg::OnPaint()
 
 	crayon_rouge.CreatePen(PS_SOLID, 1, RGB(255, 0, 0));  // rouge
 	crayon_blanc.CreatePen(PS_SOLID, 1, RGB(255, 255, 255));  //blanc
-
-
+	crayon_noir.CreatePen(PS_SOLID, 1, RGB(0, 0, 0)); 
+	crayon_vert.CreatePen(PS_SOLID, 1, RGB(0, 255, 0));
+	crayon_bleu.CreatePen(PS_SOLID, 1, RGB(0, 0, 255)); 
+	crayon_orange.CreatePen(PS_SOLID, 1, RGB(255, 128, 128));
+	crayon_jaune.CreatePen(PS_SOLID, 1, RGB(255, 180, 180));
 
 	if (IsIconic())
 	{
@@ -288,7 +319,7 @@ void CTimer_13avril2018Dlg::OnPaint()
 		CRect rect;
 		GetClientRect(&rect);
 		int x = (rect.Width() - cxIcon + 1) / 2;
-		int y = (rect.Height() - cyIcon + 1) / 2;
+		int y = (rect.Height()- cyIcon + 1) / 2;
 
 		// Draw the icon
 
@@ -297,96 +328,151 @@ void CTimer_13avril2018Dlg::OnPaint()
 	else
 	{
 
-		int i, echoNum = 0;
+		CString le_string;
+		CRect le_rectangle;
+
+		int echoNum, x, y, id, diviseur = 0;
 		int pointeurCrayon = 0;
 		int pointeurEcho = 0;
-
-		dc.SelectObject(crayon_rouge);  // dessine le cadre rouge
-
-		dc.MoveTo(left, top);
-
-		dc.LineTo(right, top);
+		
+		int longueur_pointe = 50;
+													// longueur de la fleche qui pointe la direction de deplacement.
+		dc.SelectObject(crayon_noir);				// dessine le cadre
+		int signX = 1;
+		int signY = 1;
+		
+		
+		dc.MoveTo(left, bottom);
 		dc.LineTo(right, bottom);
-		dc.LineTo(left, bottom);
+		dc.LineTo(right, top);
 		dc.LineTo(left, top);
-
-
-
+		dc.LineTo(left, bottom);
 
 		bool boucle_terminee = false;
-		
-		m_PenPointer++;
+	
+		int pointeur;
 
-		if (m_PenPointer > 9) m_PenPointer = 0;
-
-		pointeurCrayon = 0 ;
-
-		for (echoNum = 0; echoNum < m_iNombreEcho; echoNum++)
+		for ( id = 0; id < (m_iNombreEtoile); id++)
 		{
+			pointeur = m_pointeur_echo;
+			m_starArray[id]->Rotation();
+			m_starArray[id]->Translation();
+			
+			//***********************************
+			dc.SelectObject(crayon_noir);
+
+
+			diviseur = 2;
+
+			if (m_multi_lien)
+			{
+				diviseur = 4 * m_starArray[id]->m_niveau_correction;
+				if (diviseur == 0) diviseur = 2;
+			};
 
 			
-			if (echoNum <= (m_pointeur_echo-1))    //m_pointer_echo pointe vers le prochain echo. Pour l'echo actif (echo zéro), il faut soustraire "1".
-			{
-				
-				pointeurCrayon = (m_pointeur_echo-1) - echoNum;
-			}
+			x = m_starArray[id]->m_positionX[pointeur];
+			y = bottom + top - m_starArray[id]->m_positionY[pointeur];
 
-			else
+			switch (m_starArray[id]->m_niveau_correction)
 			{
-				pointeurCrayon = m_iNombreEcho - (echoNum - (m_pointeur_echo-1));  // m_iNombreEcho limité à 9 (9 quand calculé à partir de zéro) est le nombre max de couleur pour le moment.
+			case 0:dc.SelectObject(crayon_bleu);
+				break;
+			case 1:dc.SelectObject(crayon_vert);
+				break;
+			case 2:dc.SelectObject(crayon_orange);
+				break;
+			case 4:dc.SelectObject(crayon_orange);
+				break;
+			case 5:dc.SelectObject(crayon_rouge);
+				break;
+			default: dc.SelectObject(crayon_noir);
 
 			};
 
-			if (pointeurCrayon < 9) 
+			if (m_dessineCercle)
 			{
-				dc.SelectObject(crayon[pointeurCrayon]);
-			}
-			else
-			{
-				pointeurCrayon = 0;
-				dc.SelectObject(crayon[pointeurCrayon]);
+				dc.Ellipse(x - m_distanceSecuritaire / diviseur, y - m_distanceSecuritaire / diviseur, x + m_distanceSecuritaire / diviseur, y + m_distanceSecuritaire / diviseur);
 			};
 
-			//if(m_pointeur_echo == echoNum) dc.SelectObject(crayon_rouge);
+			le_rectangle.SetRect(x - 10, y - 10, x + 10, y + 10);
+			le_string.Format(_T("%2d"), id);
+			//dc.SelectObject(crayon_noir);
+			dc.DrawText(le_string, le_rectangle, DT_CENTER);
 
-			
 
-			
-
-			for (int id = 0; id < (m_iNombreEtoile - 1); id++)
+			if (m_dessineTriangle)
+				//Dessine la tete de l'objet (triangle avec rotation et translation)
 			{
-
-				m_Lignes[1].point_1 = m_starArray[id]->m_positionX[echoNum];  
-				m_Lignes[1].point_2 = m_starArray[id]->m_positionY[echoNum];
-
-				dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
-
-				if (m_multi_lien)
+				dc.MoveTo(m_starArray[id]->m_tete_coordonnees[0].x, bottom + top - m_starArray[id]->m_tete_coordonnees[0].y);
+				for (int a = 0; a < 3; a++)
 				{
-					for (int id2 = id; id2 < m_iNombreEtoile; id2++)
-					{
-						
-						m_Lignes[1].point_3 = m_starArray[id2]->m_positionX[echoNum];
-						m_Lignes[1].point_4 = m_starArray[id2]->m_positionY[echoNum];
+					dc.LineTo(m_starArray[id]->m_tete_coordonnees[a].x, bottom + top - m_starArray[id]->m_tete_coordonnees[a].y);
 
-						dc.MoveTo(m_Lignes[1].point_1, m_Lignes[1].point_2);
+				};
 
-						dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
-					};
+				dc.LineTo(m_starArray[id]->m_tete_coordonnees[0].x, bottom + top - m_starArray[id]->m_tete_coordonnees[0].y);
+			};
+			
+			//***************************************
+
+
+			for (echoNum = 0; echoNum < m_iNombreEcho - 1; echoNum++)
+			{
+
+				
+
+
+				if (m_starArray[id]->m_distance_devant < 50)
+				{
+					dc.SelectObject(crayon_rouge);
+				};
+
+				if (m_starArray[id]->m_distance_devant > 49)
+				{
+					dc.SelectObject(crayon_noir);
+				};
+
+				
+
+				if (echoNum == 0)
+				{
+					
+
+
+					pointeur++;
+					if (pointeur > m_iNombreEcho - 1) pointeur = 0;
+
+
+					x = m_starArray[id]->m_positionX[pointeur];
+					y = bottom + top - m_starArray[id]->m_positionY[pointeur];
+					dc.MoveTo(x, y);
+					pointeur++;
+					if (pointeur > m_iNombreEcho - 1) pointeur = 0;
 				}
 				else
 				{
-					m_Lignes[1].point_3 = m_starArray[id + 1]->m_positionX[echoNum];
-					m_Lignes[1].point_4 = m_starArray[id + 1]->m_positionY[echoNum];
-					dc.LineTo(m_Lignes[1].point_3, m_Lignes[1].point_4);
+
+					int x = m_starArray[id]->m_positionX[pointeur];
+					int y = bottom + top - m_starArray[id]->m_positionY[pointeur];
+					dc.LineTo(x, y);
+					pointeur++;
+					if (pointeur > m_iNombreEcho - 1) pointeur = 0;
 
 
 				};
+
+				
 			};
 
+			
 		};
-		
-	CDialogEx::OnPaint();
+		SelectObject(offscreen, bmpold);
+		DeleteObject(bmp);
+		DeleteDC(offscreen);
+
+
+		CDialogEx::OnPaint();
 	};
 }
 
@@ -404,7 +490,7 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 	// TODO: Add your control notification handler code here
 
 	
-	int posX, posY, Vx, Vy;
+	
 	int oldEchoNombre;
 
 	oldEchoNombre = m_iNombreEcho;			// sauvegarde vieille valeur du nombre d'Echo...
@@ -417,8 +503,8 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 
 	
 	
-	if (m_iNombreEcho > 19) m_iNombreEcho = 19;
-	if (m_iNombreEtoile > 99) m_iNombreEtoile = 99;
+	//if (m_iNombreEcho > 50) m_iNombreEcho = 50;
+	//if (m_iNombreEtoile > 99) m_iNombreEtoile = 99;
 
 	if (m_iNombreEcho != oldEchoNombre)
 	{
@@ -437,11 +523,11 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 	m_iCount = 0;
 	
 	m_sCount.Format(_T("%d"), m_iCount);
-	m_1_posX = (left+right)/2 + m_1_speedX;
-	m_1_posY = (top + bottom)/2 +m_1_speedY;
+	//m_1_posX = (left+right)/2 + m_1_speedX;
+	//m_1_posY = (top + bottom)/2 +m_1_speedY;
 
-	m_2_posX = (left+right)/2 +m_2_speedX;
-	m_2_posY = (top+bottom)/2 + m_2_speedY;
+	//m_2_posX = (left+right)/2 +m_2_speedX;
+	//m_2_posY = (top+bottom)/2 + m_2_speedY;
 
 	UpdateData(FALSE);
 
@@ -473,7 +559,7 @@ void CTimer_13avril2018Dlg::OnChangeEinterval()
 	
 }
 
-//test
+
 void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: Add your message handler code here and/or call default
@@ -489,6 +575,7 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 	int	oldEcho = m_iNombreEcho;
 
 	m_sCount.Format(_T("%d"), m_iCount);
+	UpdateData(FALSE);
 
 	this->GetClientRect(rect);
 
@@ -536,23 +623,43 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 
 	UpdateData(FALSE);
 	
+	m_pointeur_echo++;  //  indique la position active pour les nouvelles coordonnees...
+	if (m_pointeur_echo >= m_iNombreEcho) m_pointeur_echo = 0;
 
 	for (int id = 0; id < m_iNombreEtoile; id++)
 	{
 
-		m_starArray[id]->CalculePosition(m_pointeur_echo);
+		m_starArray[id]->Deplace(m_pointeur_echo);
+		m_starArray[id]->VerifieLimites(m_pointeur_echo);
 
 	};
+
+
+	InitDistances();
 	
-	m_pointeur_echo++;
-	if (m_pointeur_echo >= m_iNombreEcho) m_pointeur_echo = 0;
+
+	/*******************************************/
+	int debut=0, fin= m_iNombreEtoile, numThreads=1;
+
+
+	//CalculeDistances_Thread(m_pointeur_echo, debut, fin, numThreads);
+
+	/*******************************************/
+	CalculeDistances(m_pointeur_echo, debut, fin);
+
+	CalculeDistance_leader(m_pointeur_echo);
+	
+
+	for (int id = 0; id < m_iNombreEtoile; id++)
+	{
+		m_starArray[id]->CorrectionTrajectoire();
+	};
+	
+	
 
 
 	
-	/*rectToRedraw.bottom = bottom;
-	rectToRedraw.right = right;
-	rectToRedraw.left = left;
-	rectToRedraw.top = top;*/
+
 
 	InvalidateRect(&rectToRedraw, bErase);
 
@@ -562,6 +669,360 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 	CDialogEx::OnTimer(nIDEvent);
 }
 
+
+void CTimer_13avril2018Dlg::CalculeDistances_Thread(int echo, int debut, int fin, int numThreads)
+{
+	std::vector<std::thread> threadVect;
+	int threadSpread = m_iNombreEtoile / numThreads;
+
+	CTimer_13avril2018Dlg* TimerPtr = new CTimer_13avril2018Dlg;
+
+	int newEnd = debut + threadSpread - 1;
+
+	std::thread first (&CTimer_13avril2018Dlg::CalculeDistances, TimerPtr, echo, debut, fin);
+
+	/*for (int x = 0; x < numThreads; x++)
+	{
+
+		threadVect.emplace_back ( &CTimer_13avril2018Dlg::CalculeDistances, TimerPtr, echo, debut, newEnd);
+		debut += threadSpread;
+		newEnd += threadSpread;
+	};
+
+	for (auto& t : threadVect)
+	{
+		t.join();
+	};*/
+
+	delete TimerPtr;
+};
+
+void CTimer_13avril2018Dlg::InitDistances() 
+{
+	int origine;
+	
+	for (origine = 0; origine < m_iNombreEtoile; origine++)
+	{
+		m_starArray[origine]->m_distance_devant = 2000;
+		m_starArray[origine]->m_distance_droite = 2000;
+		m_starArray[origine]->m_distance_gauche = 2000;
+	};
+
+
+};
+
+void CTimer_13avril2018Dlg::CalculeDistance_leader(int echo) 
+{
+	double x1, x2, y1, y2, Vx, Vy, distance;
+	int destination = 0;																		//rotation est la direction de la rotation a ajouter au calcul (+/1 90 degres).  +1 -> +90 degres, -1 -> -90 degres.
+	double cos_teta = 0.0, sin_teta = 0.0, teta, deltaX1 = 0, deltaY1 = 0, rotation, tempx, tempy, horizonX, horizonY;
+
+// 1- calcule de l'angle du vecteur vitesse de l'objet.  Ramener le vecteur vitesse dans le plan(x, 0) (y=0).  
+// 2- Evalue si la rotation requise e
+// 3- Sauvegarde nombre de rotation et correction de trajectoire requise pour se rapproche du leader...
+
+																							
+
+	
+
+
+	for (destination = 1; destination < m_iNombreEtoile; destination++)
+	{
+		
+		
+
+
+		Vx = m_starArray[destination]->m_Vx;												// Etape 1: Calcul de l'angle du vecteur vitesse de l'objet "x"
+		Vy = m_starArray[destination]->m_Vy;
+
+
+		//***************************DONNEES POUR TEST**************
+
+		//Vx = 2;
+		//Vy = 2;
+
+		//x1 = 2;		// position de l'objet qui doit rejoindre le leader.
+		//y1 = 2;
+		//x2 = 4;		// position du leader (la destination recherchee)
+		//y2 = 3;
+
+		//**************************FIN: DONNEES POUR TEST**************
+																							//Vecteur vitesse = (0,0), (Vx, Vy)
+
+		horizonX = 10.0;																	//Vecteur axe des "x" positif (10,0) : deltaX, deltaY.  Valeur constante pour calculer la rotation.
+		horizonY = 0.0;
+
+		rotation = 0;
+
+		sin_teta = (horizonX * Vy - Vx * horizonY) / (sqrt(pow(Vx, 2) + pow(Vy, 2)) * sqrt(pow(horizonX, 2) + pow(horizonY, 2)));
+		teta = asin(sin_teta) / 3.14159 * 180;
+
+
+		if (Vx < 0 && Vy >0)																// Point situé dans le deuxième quadrand.  Angle entre 90 et 180 degres.
+		{
+			teta = 180 - abs(teta);															// ceci est l'angle entre l'axe des "x" et le vecteur vitesse de l'objet "x".
+			rotation = 1;
+		};
+
+		if (Vx < 0 && Vy < 0)
+		{
+			teta = -1 * (180 - abs(teta));													// ceci est l'angle entre l'axe des "x" et le vecteur vitesse de l'objet "x"..
+			rotation = -1;																	// Point situé dans le troisième quandrant. Angle entre -90 et -180 degrés.
+
+		};
+
+																							// Etape 2: calculer l'angle entre le vecteur vitesse de l'objet et l'axe des "x".
+
+
+		cos_teta = cos(-teta / 180 * 3.14159);												//  -teta:la rotation du vecteur distance se fait dans la direction opposee (pour rapprocher les objets).
+		sin_teta = sin(-teta / 180 * 3.14159);
+
+																							// Etape 2: faire la rotation du vecteur distance pour permettre le calcul de l'angle entre l'objet "n" et le leader (objet "0").
+		x1 = m_starArray[0]->m_positionX[echo];
+		y1 = m_starArray[0]->m_positionY[echo];												// position du leader
+
+		x2 = m_starArray[destination]->m_positionX[echo];
+		y2 = m_starArray[destination]->m_positionY[echo];									// position de l'objet qui doit rejoindre le leader.
+
+		
+
+
+		deltaX1 = x1 -x2;																	// vecteur distance entre les deux objets (coordonnes destination - coordonnes du leader). Vecteur: coordonnees(0,0) - (deltaX1, deltaY1)
+		deltaY1 = y1 -y2;																	// vecteur qui pointe de l'objet x vers le leader...
+
+		tempx = deltaX1;
+		tempy = deltaY1;
+
+		//distance = sqrt(pow(deltaX1, 2) + pow(deltaY1, 2));
+
+																							// Etape 3: rotation du vecteur distance par le meme angle que le vecteur vitesse...mais en direction opposee.
+
+		deltaX1 = cos_teta * tempx - sin_teta * tempy;
+		deltaY1 = sin_teta * tempx + cos_teta * tempy;										// Nouvelles coordonnes du vecteur distance, apres rotation.
+
+		
+		
+																							// Calcule de l'angle entre le vecteur distance (apres rotation) et l'horizon.  Ceci donne l'angle entre les deux objets.
+		
+		sin_teta = (horizonX * deltaY1 - deltaX1 * horizonY) / (sqrt(pow(deltaX1, 2) + pow(deltaY1, 2)) * sqrt(pow(horizonX, 2) + pow(horizonY, 2)));
+		teta = asin(sin_teta) / 3.14159 * 180;
+
+		if (deltaX1 < 0 && deltaY1 >0)														// Point situé dans le deuxième quadrand.  Angle entre 90 et 180 degres.
+		{
+			teta = 180 - teta;																// ceci est l'angle entre l'axe des "x" et le vecteur vitesse de l'objet "x".
+			rotation = 1;
+		};
+
+		if (deltaX1 < 0 && deltaY1 < 0)
+		{
+			teta = -1 * (180 - teta);														// ceci est l'angle entre l'axe des "x" et le vecteur vitesse de l'objet "x"..
+			rotation = -1;																	// Point situé dans le troisième quandrant. Angle entre -90 et -180 degrés.
+
+		};
+		
+		distance = sqrt(pow(deltaX1, 2) + pow(deltaY1, 2));
+		
+
+		m_angle_1_0.Format(_T("%6.3f"), teta);
+		UpdateData(FALSE);
+
+		m_starArray[destination]->SetDistanceLeader(distance, teta);
+	};
+
+};
+
+
+
+void CTimer_13avril2018Dlg::CalculeDistances(int echo, int debut, int fin)
+{
+	std::mutex vectLock;
+
+	int origine=0, destination=0, distance=0,  direction =0;
+	double vitessex=0, vitessey=0, cos_teta=0.0,sin_teta =0.0,deltaX1 = 0, deltaY1 = 0, deltaX2 = 0, deltaY2 = 0;
+	double temp_num, temp_denum, x1, x2, y1, y2, Vx, Vy;  
+
+	//*************************************************//
+
+	//Debut: Calcul des distance objet- limites du terrain
+	
+	int limite_max_X = m_starArray[origine]->m_maxX;											///m_maxXY: dimensions des limites du jeu
+	int limite_max_Y = m_starArray[origine]->m_maxY;
+	int limite_min_X = m_starArray[origine]->m_minX;
+	int limite_min_Y = m_starArray[origine]->m_minY;
+
+	for (origine = 0; origine < m_iNombreEtoile; origine++) ///for (origine = debut; origine < fin; origine++)					// for (origine = 0; origine < m_iNombreEtoile; origine++)
+	{
+		
+	
+				x1 = m_starArray[origine]->m_positionX[echo];									// position de l'objet
+				y1 = m_starArray[origine]->m_positionY[echo];
+
+				deltaX1 = limite_max_X - x1;													// calcul des distances entre l'objet et les limites du terrain...
+				deltaY1 = limite_max_Y - y1;
+				deltaX2 = limite_min_X - x1;
+				deltaY2 = limite_min_Y - y1;
+
+				if (abs(deltaX2) < abs(deltaX1))
+				{
+					deltaX1 = deltaX2;															//trouve la plus courte distance en "X" et sauve dans deltaX1
+				};
+				if (abs(deltaY2) < abs(deltaY1))
+				{
+					deltaY1 = deltaY2;															//trouve la plus courte distance en "Y" et sauve dans deltaY1
+				};
+
+
+				if (abs(deltaY1) < abs(deltaX1))												//prendre la distance la plus courte entre un mur et l'objet...en ligne droite (perpendiculaire au mur)
+				{
+					deltaX1 = 0;
+				}
+				else
+				{
+					deltaY1 = 0;
+				}
+				
+
+				distance = sqrt(pow(deltaX1, 2) + pow(deltaY1, 2));
+
+				// calcul de l'angle entre la direction de l'objet et l'obstacle (objet 2).  Vecteur 1 = distance (deltax, deltay), vecteur 2 = vitesse de l'objet #1.
+
+
+				//if (m_starArray[destination]->m_Vx == 0) m_starArray[destination]->m_Vx = 0.001;  // correction pour éviter de diviser par zero.
+
+				Vx = m_starArray[origine]->m_Vx;
+				Vy = m_starArray[origine]->m_Vy;
+
+				sin_teta = (Vx * deltaY1 - deltaX1 * Vy) / (sqrt(pow(Vx, 2) + pow(Vy, 2)) * sqrt(pow(deltaX1, 2) + pow(deltaY1, 2)));
+
+				// sin teta > 0: angle entre 0 <-> +180,  sin_teta <0: angle 0 <-> -180
+
+
+				// fin du calcul du cote de l'approche
+
+
+
+				// calcul de l'angle entre les vecteurs:
+
+				//temp_num = m_starArray[destination]->m_Vx * deltaX + m_starArray[destination]->m_Vy * deltaY;
+				//temp_denum = sqrt(pow(m_starArray[destination]->m_Vx, 2) + pow(m_starArray[destination]->m_Vy, 2)) * sqrt(pow(deltaX, 2) + pow(deltaY, 2));
+
+				//cos_teta = temp_num / temp_denum;
+
+				// calcul de la direction pour eviter la collision (obstacle à gauche=1 , droite=2)
+
+				if (sin_teta < 0) direction = 1;
+				if (sin_teta > 0) direction = 2;
+
+
+				m_starArray[origine]->UpdateDistance(distance, sin_teta, direction);
+
+
+				if (origine == 0 && destination == 1)
+				{
+					m_distance_0_1.Format(_T("%d"), distance);				// m_str_...: affiche les dimensions dans le dialogue.
+					m_angle_0_1.Format(_T("%6.3f"), asin(sin_teta) * 180.0 / 3.14159);
+
+					UpdateData(FALSE);
+
+				};
+				if (origine == 1 && destination == 0)
+				{
+
+
+					//m_angle_1_0.Format(_T("%6.3f"), asin(sin_teta) * 180 / 3.14159);
+					//UpdateData(FALSE);
+				}
+
+				
+			
+
+		
+
+	};
+	//Fin: Calcul des distance objet- limites du terrain
+
+	//*************************************************//
+
+
+
+	for (origine = 0; origine < m_iNombreEtoile; origine++) 					
+	{
+		for (destination = 0; destination < m_iNombreEtoile; destination++) ///for (destination = 0; destination < 15; destination++)   //for (destination = 0; destination < m_iNombreEtoile; destination++)
+		{
+			if (origine != destination)
+			{
+				
+				x1 = m_starArray[origine]->m_positionX[echo];
+				y1 = m_starArray[origine]->m_positionY[echo];
+
+				x2 = m_starArray[destination]->m_positionX[echo];
+				y2 = m_starArray[destination]->m_positionY[echo];
+				
+				
+
+				deltaX1 = x2-x1;																	// vecteur distance entre les deux objets:  coordonnees(0,0) - (deltaX1, deltaY1)
+				deltaY1 = y2-y1;
+
+				distance = sqrt(pow(deltaX1, 2) + pow(deltaY1, 2));
+				
+				// calcul de l'angle entre la direction de l'objet et l'obstacle (objet 2).  Vecteur 1 = distance (deltax, deltay), vecteur 2 = vitesse de l'objet #1.
+
+				
+				if (m_starArray[destination]->m_Vx == 0) m_starArray[destination]->m_Vx = 0.001;	// correction pour éviter de diviser par zero.
+
+				Vx = m_starArray[origine]->m_Vx;
+				Vy = m_starArray[origine]->m_Vy;													// vecteur vitesse :  coordonnees(0,0) - (Vx, Vy)
+
+				
+				
+				sin_teta = (Vx * deltaY1 - deltaX1 * Vy) / (sqrt(pow(Vx, 2) + pow(Vy, 2)) * sqrt(pow(deltaX1, 2) + pow(deltaY1, 2)));
+				
+				
+				// calcul de l'angle entre les vecteurs:
+
+				//temp_num = m_starArray[destination]->m_Vx * deltaX + m_starArray[destination]->m_Vy * deltaY;
+				//temp_denum = sqrt(pow(m_starArray[destination]->m_Vx, 2) + pow(m_starArray[destination]->m_Vy, 2)) * sqrt(pow(deltaX, 2) + pow(deltaY, 2));
+
+				//cos_teta = temp_num / temp_denum;
+
+				// calcul de la direction pour eviter la collision (obstacle à gauche=1 , droite=2)
+
+				if (sin_teta < 0) direction = 2;
+				if (sin_teta > 0) direction = 1;
+
+				
+				m_starArray[origine]->UpdateDistance(distance, sin_teta, direction);
+
+				if (origine == 0)
+				{
+					m_starArray[destination]->SetDistanceLeader(distance, sin_teta);
+
+				};
+			
+
+				if (origine == 0 && destination == 1)
+				{
+					m_distance_0_1.Format(_T("%d"), distance);				// m_str_...: affiche les dimensions dans le dialogue.
+					m_angle_0_1.Format(_T("%6.3f"), asin(sin_teta)*180.0/3.14159);
+					UpdateData(FALSE);
+
+				};
+				if (origine == 1 && destination == 0)
+				{
+					m_angle_1_0.Format(_T("%6.3f"), asin(sin_teta) * 180 / 3.14159);
+					UpdateData(FALSE);
+				}
+
+				//m_starArray[destination]->UpdateDistance(distance, cos_teta, direction);  //met à jour les distances pour les deux objets.  Inverse la direction des deltaX,Y quand on mesure à partir de la destination...
+			};
+
+		};
+
+	};
+
+	
+	
+};
 
 void CTimer_13avril2018Dlg::OnEnChangeEnombreEcho()
 {
@@ -576,7 +1037,7 @@ void CTimer_13avril2018Dlg::OnEnChangeEnombreEcho()
 	
 	UpdateData(TRUE);
 
-	if (m_iNombreEcho > 19) m_iNombreEcho = 19;
+	if (m_iNombreEcho > 50) m_iNombreEcho = 50;
 
 	if (oldEcho != m_iNombreEcho)
 	{
@@ -620,13 +1081,13 @@ void CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile()
 
 			m_starArray[id]->InitEcho(m_iNombreEcho);
 
-			posX = (left + right) / 2;
-			posY = (top + bottom) / 2;
+			posX = (rand() % (right-left) + left); //(left + right) / 2;
+			posY = (rand() % (top-bottom) + top); //(top + bottom) / 2;
 
 			m_starArray[id]->InitPosition(posX, posY);
 
-			Vx = (rand() % 10 + 1);
-			Vy = (rand() % 10 + 1);
+			Vx = 5; // (rand() % 10 + 1);
+			Vy = 5; // (rand() % 10 + 1);
 
 			m_starArray[id]->SetVitesse(Vx, Vy);
 
