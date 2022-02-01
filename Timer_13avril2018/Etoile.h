@@ -42,7 +42,7 @@ public:
 	int m_positionY[50] = { 0 };
 	int m_positionZ[50] = { 0 };
 
-	float m_Vx, m_Vy,m_Vz, m_V;								//vitesse de l'objet (x,y, total)
+	float m_Vx, m_Vy,m_Vz, m_V;								//vitesse de l'objet (x,y,z total)
 
 	float m_cosTeta, m_sinTeta;								//angle entre l'objet en mouvement et l'objet le plus pres.  cosDelta 
 	float m_Teta_leader;
