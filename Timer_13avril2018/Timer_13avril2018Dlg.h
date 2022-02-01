@@ -48,6 +48,9 @@ public:
 	
 	int m_iInterval=50;
 	int m_iCount=10;
+	int m_iCountLeader = 0;
+
+
 	afx_msg void OnChangeEinterval();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	void CalculeDistances(int echo, int debut, int fin);
@@ -55,18 +58,26 @@ public:
 	void CalculeDistance_leader(int echo);
 	void InitDistances();
 
+	void NoTimer();
+
 private:
 	
 
 public:
 	int m_1_posX;									//positions et vitesses des points
 	int m_1_posY;
+	int m_1_posZ;
 
-	int m_2_posY;
+	//int m_2_posY;
+	
 	float m_1_speedX;
 	float m_1_speedY;
+	float m_1_speedZ;
+
 	float m_2_speedX;
 	float m_2_speedY;
+	float m_2_speedZ;
+
 	afx_msg void OnEnChangeEnombreEcho();
 	int m_iNombreEcho;								//nombre d'echo qui seront retenus pour afficher...		
 	afx_msg void OnEnChangeEnombreEtoile();
@@ -84,7 +95,7 @@ public:
 		int point_4;
 	};
 
-	int top, bottom, left, right, oldRight, oldBottom =0;
+	int top, bottom, left, right, front, back, oldRight, oldBottom =0;
 	
 		
 	CEtoile* m_starArray[100];
@@ -96,7 +107,7 @@ public:
 	int m_pointeur_echo = 0; // indique quel est l'écho actif.
 
 
-	BOOL m_multi_lien;
+	BOOL m_multi_lien, m_running;
 	CString m_str_right;
 	CString m_str_bottom;
 	CString m_largeur;
@@ -109,4 +120,10 @@ public:
 	CString m_angle_1_0;
 	BOOL m_dessineCercle;
 	BOOL m_dessineTriangle;
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnCustomdrawSlider1(NMHDR* pNMHDR, LRESULT* pResult);
+//	int m_slider_D1;
+//	int m_slider_D2;
+	BOOL m_3D_enable;
+	afx_msg void OnBnClickedCheck43d();
 };

@@ -74,7 +74,7 @@ CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent)
 	, m_1_posX(0)
 	, m_1_posY(0)
 	//, m_2_posX(0)
-	, m_2_posY(0)
+	//, m_2_posY(0)
 	, m_1_speedX(0)
 	, m_1_speedY(0)
 	, m_2_speedX(0)
@@ -91,6 +91,9 @@ CTimer_13avril2018Dlg::CTimer_13avril2018Dlg(CWnd* pParent)
 	, m_angle_1_0(_T(""))
 	, m_dessineCercle(FALSE)
 	, m_dessineTriangle(FALSE)
+	//, m_slider_D1(0)
+	//, m_slider_D2(0)
+	, m_3D_enable(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -120,6 +123,11 @@ void CTimer_13avril2018Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_ANGLE_1_0, m_angle_1_0);
 	DDX_Check(pDX, IDC_CHECK3, m_dessineCercle);
 	DDX_Check(pDX, IDC_CHECK2, m_dessineTriangle);
+	//  DDX_Slider(pDX, IDC_SLIDER1, m_slider_D1);
+	//  DDV_MinMaxInt(pDX, m_slider_D1, 10, 200);
+	//  DDX_Slider(pDX, IDC_SLIDER2, m_slider_D2);
+	//  DDV_MinMaxInt(pDX, m_slider_D2, 0, 200);
+	DDX_Check(pDX, IDC_CHECK4_3D, m_3D_enable);
 }
 
 BEGIN_MESSAGE_MAP(CTimer_13avril2018Dlg, CDialogEx)
@@ -132,6 +140,9 @@ BEGIN_MESSAGE_MAP(CTimer_13avril2018Dlg, CDialogEx)
 	ON_WM_TIMER()
 	ON_EN_CHANGE(IDC_ENOMBRE_ECHO, &CTimer_13avril2018Dlg::OnEnChangeEnombreEcho)
 	ON_EN_CHANGE(IDC_ENOMBRE_ETOILE, &CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile)
+	ON_WM_ERASEBKGND()
+	//ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER1, &CTimer_13avril2018Dlg::OnCustomdrawSlider1)
+	ON_BN_CLICKED(IDC_CHECK4_3D, &CTimer_13avril2018Dlg::OnBnClickedCheck43d)
 END_MESSAGE_MAP()
 
 
@@ -191,25 +202,28 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 
 	top = 0.05*rect.bottom;
 
+
+	//************************************ 3D
+	front = bottom;
+	back =  top;
+
+	//************************************ 3D
+
+
 	CPaintDC dc(this); // device context for painting
 
 
 
 
-	m_iInterval = 80;
+	m_iInterval = 40;
 
-	m_1_posX = left +(rand() % (right-left)); //(left + right) / 2 + m_1_speedX;
-	m_1_posY = top + (rand() % (bottom-top)); //(top + bottom) / 2 + m_1_speedY;
+	m_1_posX = left +(rand() % (right-left));
+	m_1_posY = top + (rand() % (bottom-top)); 
+	m_1_posZ = back + (rand() % (front - back));
 
-	//m_2_posX = (left + right) / 2 + m_2_speedX;
-	//m_2_posY = (top + bottom) / 2 + m_2_speedY;
 	
-	m_1_speedX = 5;
-	m_1_speedY = 6;
-	m_2_speedX = 7;
-	m_2_speedY = 8;
 
-	m_iNombreEtoile = 2;
+	m_iNombreEtoile = 3;
 	m_iNombreEcho = 20;
 	m_dessineTriangle = TRUE;
 	
@@ -225,25 +239,30 @@ BOOL CTimer_13avril2018Dlg::OnInitDialog()
 		m_starArray[id]->InitEcho(m_iNombreEcho);
 
 		m_1_posX = left + (rand() % (right - left)); 
-		m_1_posY = top + (rand() % (bottom - top)); 
+		m_1_posY = top + (rand() % (bottom - top));
+		m_1_posZ = back + (rand() % (front - back));
 
-		m_starArray[id]->InitPosition(m_1_posX, m_1_posY);
+		m_starArray[id]->InitPosition(m_1_posX, m_1_posY, m_1_posZ);
 		
-		m_1_speedX = 5; //(rand() % 10 + 1);
-		m_1_speedY = 5; //(rand() % 10 + 1);
+		m_1_speedX = 5; 
+		m_1_speedY = 5; 
+		m_1_speedZ = 5;
 
-		m_starArray[id]->SetVitesse(m_1_speedX, m_1_speedY);
+		m_starArray[id]->SetVitesse(m_1_speedX, m_1_speedY, m_1_speedZ);
 
-		m_starArray[id]->SetLimites(right, bottom, left, top);
+		m_starArray[id]->SetLimites(right, bottom, left, top, front, back);
 
 
 
 	};
 
 	m_multi_lien = FALSE;
-	m_pointeur_echo = 0;  // pointe vers la premiere case du vecteur pour l'echo actif initialement.
+	m_pointeur_echo = 20;  // pointe vers la premiere case du vecteur pour l'echo actif initialement.
 
 	UpdateData(FALSE);
+
+	m_running = false;
+
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -267,38 +286,14 @@ void CTimer_13avril2018Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 void CTimer_13avril2018Dlg::OnPaint()
 {
-	CPaintDC dc(this); // device context for painting
+	CPaintDC dc(this); // device context for painting 
 
-	HDC offscreen = CreateCompatibleDC(NULL); // <- create the offscreen DC
-	HBITMAP bmp = CreateBitmap(right-left, bottom-top, 1, 8, NULL);
-	HBITMAP bmpold = (HBITMAP)SelectObject(offscreen, bmp); // <- put the bitmap in the dc
 
 	COLORREF couleur;
 	couleur = (100, 255, 0);
 	
 	
 	CPen crayon_rouge, crayon_blanc, crayon_noir, crayon_orange, crayon_vert, crayon_bleu, crayon_jaune;
-
-	CPen crayon[10];
-
-	crayon[0].CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-	crayon[1].CreatePen(PS_SOLID, 1, RGB(25, 25, 0));
-	crayon[2].CreatePen(PS_SOLID, 1, RGB(50, 50, 25));
-	crayon[3].CreatePen(PS_SOLID, 1, RGB(50, 75, 50));
-	crayon[4].CreatePen(PS_SOLID, 1, RGB(125, 100, 50));
-	crayon[5].CreatePen(PS_SOLID, 1, RGB(125, 100, 75));
-	crayon[6].CreatePen(PS_SOLID, 1, RGB(100, 155, 155));
-	crayon[7].CreatePen(PS_SOLID, 1, RGB(180, 180, 100));
-	crayon[8].CreatePen(PS_SOLID, 1, RGB(205, 180, 205));
-	crayon[9].CreatePen(PS_SOLID, 1, RGB(230, 180, 230));
-	
-
-
-
-
-
-
-
 	crayon_rouge.CreatePen(PS_SOLID, 1, RGB(255, 0, 0));  // rouge
 	crayon_blanc.CreatePen(PS_SOLID, 1, RGB(255, 255, 255));  //blanc
 	crayon_noir.CreatePen(PS_SOLID, 1, RGB(0, 0, 0)); 
@@ -306,18 +301,32 @@ void CTimer_13avril2018Dlg::OnPaint()
 	crayon_bleu.CreatePen(PS_SOLID, 1, RGB(0, 0, 255)); 
 	crayon_orange.CreatePen(PS_SOLID, 1, RGB(255, 128, 128));
 	crayon_jaune.CreatePen(PS_SOLID, 1, RGB(255, 180, 180));
+	CRect rect;
+	GetClientRect(&rect);
+
+
+	//CDC MemDC;
+	//CBitmap MemBitmap;
+	//pDC = this->GetDC();
+
+/*	MemDC.CreateCompatibleDC(dc);
+	MemBitmap.CreateCompatibleBitmap(&pDC, rect.right, rect.bottom);
+
+	CBitmap* pOldBitmap = (CBitmap*)MemDC.SelectObject(&MemBitmap);
+
+	//MemDC.FillSolidRect(0, 0, rect.right, rect.bottom, RGB(255, 255, 255));*/
+
 
 	if (IsIconic())
 	{
 		//CPaintDC dc(this); // device context for painting
 
-		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
+		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);  ///SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
 		// Center icon in client rectangle
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
-		CRect rect;
-		GetClientRect(&rect);
+		
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height()- cyIcon + 1) / 2;
 
@@ -337,10 +346,9 @@ void CTimer_13avril2018Dlg::OnPaint()
 		
 		int longueur_pointe = 50;
 													// longueur de la fleche qui pointe la direction de deplacement.
-		dc.SelectObject(crayon_noir);				// dessine le cadre
+		dc.SelectObject(crayon_noir);				// dessine le cadre    dc.SelectObject(crayon_noir);
 		int signX = 1;
 		int signY = 1;
-		
 		
 		dc.MoveTo(left, bottom);
 		dc.LineTo(right, bottom);
@@ -395,11 +403,13 @@ void CTimer_13avril2018Dlg::OnPaint()
 				dc.Ellipse(x - m_distanceSecuritaire / diviseur, y - m_distanceSecuritaire / diviseur, x + m_distanceSecuritaire / diviseur, y + m_distanceSecuritaire / diviseur);
 			};
 
-			le_rectangle.SetRect(x - 10, y - 10, x + 10, y + 10);
-			le_string.Format(_T("%2d"), id);
-			//dc.SelectObject(crayon_noir);
-			dc.DrawText(le_string, le_rectangle, DT_CENTER);
-
+			if (m_multi_lien)			// si multi_lien = true, alors dessine numero.
+			{
+				le_rectangle.SetRect(x - 10, y - 10, x + 10, y + 10);
+				le_string.Format(_T("%2d"), id);
+				//dc.SelectObject(crayon_noir);
+				dc.DrawText(le_string, le_rectangle, DT_CENTER);
+			};
 
 			if (m_dessineTriangle)
 				//Dessine la tete de l'objet (triangle avec rotation et translation)
@@ -467,9 +477,11 @@ void CTimer_13avril2018Dlg::OnPaint()
 
 			
 		};
-		SelectObject(offscreen, bmpold);
-		DeleteObject(bmp);
-		DeleteDC(offscreen);
+		//dc.BitBlt(0, 0, rect.right, rect.bottom, &MemDC, 0, 0, SRCCOPY);
+		//MemDC.SelectObject(pOldBitmap);
+
+	//	ReleaseDC(&dc);
+	//	ReleaseDC(&MemDC);
 
 
 		CDialogEx::OnPaint();
@@ -497,14 +509,17 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 
 	srand(time(NULL));
 
-	
+	// modification: DEBUT
+	m_running = TRUE;
+
+	// modification: FIN
 
 	UpdateData(TRUE);						// lit les parametres du dialogue.
 
 	
 	
-	//if (m_iNombreEcho > 50) m_iNombreEcho = 50;
-	//if (m_iNombreEtoile > 99) m_iNombreEtoile = 99;
+	if (m_iNombreEcho > 50) m_iNombreEcho = 50;
+	if (m_iNombreEtoile > 99) m_iNombreEtoile = 99;
 
 	if (m_iNombreEcho != oldEchoNombre)
 	{
@@ -512,7 +527,7 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 		for (int id = 0; id < m_iNombreEtoile; id++)
 		{
 			m_starArray[id]->InitEcho(m_iNombreEcho);
-
+			
 			
 		};
 
@@ -521,17 +536,14 @@ void CTimer_13avril2018Dlg::OnBnClickedStartbutton()
 
 
 	m_iCount = 0;
+	m_iCountLeader = 0;
 	
 	m_sCount.Format(_T("%d"), m_iCount);
-	//m_1_posX = (left+right)/2 + m_1_speedX;
-	//m_1_posY = (top + bottom)/2 +m_1_speedY;
-
-	//m_2_posX = (left+right)/2 +m_2_speedX;
-	//m_2_posY = (top+bottom)/2 + m_2_speedY;
-
+	
 	UpdateData(FALSE);
 
-	SetTimer(ID_COUNT_TIMER, m_iInterval, NULL);
+	SetTimer(ID_COUNT_TIMER, m_iInterval, NULL); 
+
 }
 
 
@@ -539,7 +551,15 @@ void CTimer_13avril2018Dlg::OnBnClickedStopbutton()
 {
 	// TODO: Add your control notification handler code here
 
+	// modification: DEBUT
+
 	KillTimer(ID_COUNT_TIMER);
+
+//	m_running = FALSE;
+
+	
+	// modification: FIN
+
 }
 
 
@@ -559,7 +579,6 @@ void CTimer_13avril2018Dlg::OnChangeEinterval()
 	
 }
 
-
 void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: Add your message handler code here and/or call default
@@ -571,11 +590,11 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 	bool bErase = TRUE;
 
 	m_iCount++;
-
+	float temp1, temp2, correction;
 	int	oldEcho = m_iNombreEcho;
 
 	m_sCount.Format(_T("%d"), m_iCount);
-	UpdateData(FALSE);
+	//UpdateData(FALSE);
 
 	this->GetClientRect(rect);
 
@@ -600,7 +619,132 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 		for (int id = 0; id < m_iNombreEtoile; id++)
 		{
 
-			m_starArray[id]->SetLimites(right, bottom, left, top);
+			m_starArray[id]->SetLimites(right, bottom, left, top, front, back);
+
+
+
+		};
+	}
+	else {
+
+		rectToRedraw.bottom = bottom;
+		rectToRedraw.right = right;
+		rectToRedraw.left = left;
+		rectToRedraw.top = top;
+
+	};
+
+
+	UpdateData(TRUE);
+
+	m_str_bottom.Format(_T("%d"), rect.bottom);				// m_str_...: affiche les dimensions dans le dialogue.
+	m_str_right.Format(_T("%d"), rect.right);				// m_str_...: affiche les dimensions dans le dialogue.
+
+	UpdateData(FALSE);
+
+	m_pointeur_echo++;  //  indique la position active pour les nouvelles coordonnees...
+	if (m_pointeur_echo >= m_iNombreEcho) m_pointeur_echo = 0;
+
+	for (int id = 0; id < m_iNombreEtoile; id++)
+	{
+
+		m_starArray[id]->Deplace(m_pointeur_echo);
+		m_starArray[id]->VerifieLimites(m_pointeur_echo);
+
+	};
+
+
+	InitDistances();
+
+
+	/*******************************************/
+	int debut = 0, fin = m_iNombreEtoile, numThreads = 1;
+
+
+	//CalculeDistances_Thread(m_pointeur_echo, debut, fin, numThreads);
+
+	/*******************************************/
+	CalculeDistances(m_pointeur_echo, debut, fin);
+
+	CalculeDistance_leader(m_pointeur_echo);
+
+
+	for (int id = 0; id < m_iNombreEtoile; id++)
+	{
+		m_starArray[id]->CorrectionTrajectoire();
+	};
+
+	if (m_iCount > m_iCountLeader)
+	{
+
+		m_iCountLeader = m_iCountLeader + rand() % 10 + 10;						// identifie le prochain point dans le temps pour le changement de trajectoire du leader...
+		correction = rand() % 90 - 45;											// nombre aleatoire entre 0 et 10 pour le changement de trajectoire du leader ( -20 - +20 degres)
+		temp1 = m_starArray[0]->m_Vx;
+		temp2 = m_starArray[0]->m_Vy;
+
+		m_starArray[0]->m_Vx = cos(correction / 180 * 3.14159) * temp1 - sin(correction / 180 * 3.14159) * temp2;
+		m_starArray[0]->m_Vy = sin(correction / 180 * 3.14159) * temp1 + cos(correction / 180 * 3.14159) * temp2;
+	};
+
+
+
+
+
+
+
+	InvalidateRect(&rectToRedraw, bErase);
+
+	UpdateData(FALSE);
+	for (int i = 0; i < 10; i++)
+	{
+
+		NoTimer();
+	};
+
+	CDialogEx::OnTimer(nIDEvent);
+}
+
+void CTimer_13avril2018Dlg::NoTimer()
+{
+	// TODO: Add your message handler code here and/or call default
+	RECT rectToRedraw;
+	//WINDOWPLACEMENT winPlace;
+	CClientDC dc(this);
+	CRect rect;
+
+	bool bErase = TRUE;
+
+	m_iCount++;
+	float temp1, temp2, correction;
+	int	oldEcho = m_iNombreEcho;
+
+	m_sCount.Format(_T("%d"), m_iCount);
+	//UpdateData(FALSE);
+
+	this->GetClientRect(rect);
+
+	m_str_bottom.Format(_T("%d"), rect.bottom);				// m_str_...: affiche les dimensions dans le dialogue.
+	m_str_right.Format(_T("%d"), rect.right);				// m_str_...: affiche les dimensions dans le dialogue.
+
+	if (rect.bottom != oldBottom || rect.right != oldRight)
+	{
+		rectToRedraw.bottom = rect.bottom;
+		rectToRedraw.right = rect.right;
+		rectToRedraw.left = rect.left;
+		rectToRedraw.top = rect.top;
+
+		bottom = 0.9 * rect.bottom;
+		left = 0.2 * rect.right;
+		right = 0.9 * rect.right;
+		top = 0.1 * rect.bottom;
+
+		oldBottom = rect.bottom;
+		oldRight = rect.right;
+
+		for (int id = 0; id < m_iNombreEtoile; id++)
+		{
+
+			m_starArray[id]->SetLimites(right, bottom, left, top, front, back);
 
 
 
@@ -655,6 +799,18 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 		m_starArray[id]->CorrectionTrajectoire();
 	};
 	
+	if (m_iCount > m_iCountLeader)
+	{
+
+		m_iCountLeader = m_iCountLeader + rand() % 10 + 10;						// identifie le prochain point dans le temps pour le changement de trajectoire du leader...
+		correction = rand() % 90 -45;											// nombre aleatoire entre 0 et 10 pour le changement de trajectoire du leader ( -20 - +20 degres)
+		temp1 = m_starArray[0]->m_Vx;
+		temp2 = m_starArray[0]->m_Vy;
+
+		m_starArray[0]->m_Vx = cos(correction/180*3.14159) * temp1 - sin(correction/180*3.14159) * temp2;
+		m_starArray[0]->m_Vy = sin(correction / 180 * 3.14159) * temp1 + cos(correction / 180 * 3.14159) * temp2;
+	};
+
 	
 
 
@@ -665,8 +821,7 @@ void CTimer_13avril2018Dlg::OnTimer(UINT_PTR nIDEvent)
 
 	UpdateData(FALSE);
 
-
-	CDialogEx::OnTimer(nIDEvent);
+	
 }
 
 
@@ -822,10 +977,6 @@ void CTimer_13avril2018Dlg::CalculeDistance_leader(int echo)
 		
 		distance = sqrt(pow(deltaX1, 2) + pow(deltaY1, 2));
 		
-
-		m_angle_1_0.Format(_T("%6.3f"), teta);
-		UpdateData(FALSE);
-
 		m_starArray[destination]->SetDistanceLeader(distance, teta);
 	};
 
@@ -845,12 +996,12 @@ void CTimer_13avril2018Dlg::CalculeDistances(int echo, int debut, int fin)
 
 	//Debut: Calcul des distance objet- limites du terrain
 	
-	int limite_max_X = m_starArray[origine]->m_maxX;											///m_maxXY: dimensions des limites du jeu
+	int limite_max_X = m_starArray[origine]->m_maxX;											//m_maxXY: dimensions des limites du jeu
 	int limite_max_Y = m_starArray[origine]->m_maxY;
 	int limite_min_X = m_starArray[origine]->m_minX;
 	int limite_min_Y = m_starArray[origine]->m_minY;
 
-	for (origine = 0; origine < m_iNombreEtoile; origine++) ///for (origine = debut; origine < fin; origine++)					// for (origine = 0; origine < m_iNombreEtoile; origine++)
+	for (origine = 0; origine < m_iNombreEtoile; origine++) 									// for (origine = 0; origine < m_iNombreEtoile; origine++)
 	{
 		
 	
@@ -894,19 +1045,7 @@ void CTimer_13avril2018Dlg::CalculeDistances(int echo, int debut, int fin)
 
 				sin_teta = (Vx * deltaY1 - deltaX1 * Vy) / (sqrt(pow(Vx, 2) + pow(Vy, 2)) * sqrt(pow(deltaX1, 2) + pow(deltaY1, 2)));
 
-				// sin teta > 0: angle entre 0 <-> +180,  sin_teta <0: angle 0 <-> -180
-
-
-				// fin du calcul du cote de l'approche
-
-
-
-				// calcul de l'angle entre les vecteurs:
-
-				//temp_num = m_starArray[destination]->m_Vx * deltaX + m_starArray[destination]->m_Vy * deltaY;
-				//temp_denum = sqrt(pow(m_starArray[destination]->m_Vx, 2) + pow(m_starArray[destination]->m_Vy, 2)) * sqrt(pow(deltaX, 2) + pow(deltaY, 2));
-
-				//cos_teta = temp_num / temp_denum;
+				
 
 				// calcul de la direction pour eviter la collision (obstacle à gauche=1 , droite=2)
 
@@ -916,25 +1055,7 @@ void CTimer_13avril2018Dlg::CalculeDistances(int echo, int debut, int fin)
 
 				m_starArray[origine]->UpdateDistance(distance, sin_teta, direction);
 
-
-				if (origine == 0 && destination == 1)
-				{
-					m_distance_0_1.Format(_T("%d"), distance);				// m_str_...: affiche les dimensions dans le dialogue.
-					m_angle_0_1.Format(_T("%6.3f"), asin(sin_teta) * 180.0 / 3.14159);
-
-					UpdateData(FALSE);
-
-				};
-				if (origine == 1 && destination == 0)
-				{
-
-
-					//m_angle_1_0.Format(_T("%6.3f"), asin(sin_teta) * 180 / 3.14159);
-					//UpdateData(FALSE);
-				}
-
-				
-			
+						
 
 		
 
@@ -1002,7 +1123,7 @@ void CTimer_13avril2018Dlg::CalculeDistances(int echo, int debut, int fin)
 
 				if (origine == 0 && destination == 1)
 				{
-					m_distance_0_1.Format(_T("%d"), distance);				// m_str_...: affiche les dimensions dans le dialogue.
+					//m_distance_0_1.Format(_T("%d"), m_slider_D1);				// m_str_...: affiche les dimensions dans le dialogue.    distance
 					m_angle_0_1.Format(_T("%6.3f"), asin(sin_teta)*180.0/3.14159);
 					UpdateData(FALSE);
 
@@ -1063,7 +1184,7 @@ void CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile()
 
 	// TODO:  Add your control notification handler code here
 
-	int posX, posY, Vx, Vy;
+	int posX, posY, posZ, Vx, Vy, Vz;
 
 	m_iOldNombreEtoile = m_iNombreEtoile;
 
@@ -1083,15 +1204,17 @@ void CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile()
 
 			posX = (rand() % (right-left) + left); //(left + right) / 2;
 			posY = (rand() % (top-bottom) + top); //(top + bottom) / 2;
+			posZ = (rand() % (front - back) + back); //(top + bottom) / 2;
 
-			m_starArray[id]->InitPosition(posX, posY);
+			m_starArray[id]->InitPosition(posX, posY, posZ);
 
 			Vx = 5; // (rand() % 10 + 1);
 			Vy = 5; // (rand() % 10 + 1);
+			Vz = 5;
 
-			m_starArray[id]->SetVitesse(Vx, Vy);
+			m_starArray[id]->SetVitesse(Vx, Vy, Vz);
 
-			m_starArray[id]->SetLimites(right, bottom, left, top);
+			m_starArray[id]->SetLimites(right, bottom, left, top, front, back);
 
 
 
@@ -1112,4 +1235,34 @@ void CTimer_13avril2018Dlg::OnEnChangeEnombreEtoile()
 		
 	};
 	
+}
+
+
+BOOL CTimer_13avril2018Dlg::OnEraseBkgnd(CDC* pDC)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	return CDialogEx::OnEraseBkgnd(pDC);
+}
+
+
+void CTimer_13avril2018Dlg::OnCustomdrawSlider1(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+}
+
+
+void CTimer_13avril2018Dlg::OnBnClickedCheck43d()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+
+	for(int id=0; id< m_iNombreEtoile; id++)
+	{
+		m_starArray[id]->Set3D(m_3D_enable);
+
+
+	};
 }
