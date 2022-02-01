@@ -41,6 +41,15 @@ int CEtoile::InitEcho(int iEcho)
 	return 0;
 }
 
+
+/*void CEtoile::SetD1_D2(int D1, int D2)
+{
+	m_D1 = D1;
+	m_D2 = D2;
+
+};*/
+
+
 void CEtoile::Rotation()
 {
 // rotation des coordonnes de la tete de l'objet: 
@@ -89,16 +98,20 @@ void CEtoile::Translation()
 
 };
 
-void CEtoile::SetLimites(int maxX, int maxY, int minX, int minY)
+void CEtoile::SetLimites(int maxX, int maxY, int minX, int minY, int minZ, int maxZ)
 {
 	m_maxX = maxX;
-	m_maxY = maxY;
 	m_minX = minX;
+
+	m_maxY = maxY;
 	m_minY = minY;
-}
+
+	m_minZ = minZ;
+	m_maxZ = maxZ;
+};
 
 
-void CEtoile::InitPosition(int posX, int posY)
+void CEtoile::InitPosition(int posX, int posY, int posZ)
 {
 	// positionne le point de départ au centre de l'aire pour débuter.  Versions futures, la position sera déterminée ailleurs...
 
@@ -117,11 +130,13 @@ void CEtoile::InitPosition(int posX, int posY)
 }
 
 
-void CEtoile::SetVitesse(float Vx, float Vy)
+void CEtoile::SetVitesse(float Vx, float Vy, float Vz)
 {
 	
 	m_Vx = Vx;
 	m_Vy = Vy;
+	m_Vz = Vz;
+
 	m_V = sqrt(pow(m_Vx, 2) + pow(m_Vy, 2));	//vitesse de l'objet 
 	
 	m_cosVitesse = m_Vx/m_V;						//calcul de l'angle de rotation de l'objet.  Utilisé pour dessiner à l'écran.
@@ -260,7 +275,7 @@ void CEtoile::CorrectionTrajectoire()
 	};
 
 	
-	if (m_distance_devant < 50 && m_distance_devant >30)
+	if (m_distance_devant < m_D1 && m_distance_devant >m_D2)
 	{
 		
 		m_niveau_correction = 1;
@@ -284,7 +299,7 @@ void CEtoile::CorrectionTrajectoire()
 
 
 
-	if (m_distance_devant < 31 && m_distance_devant >20 )
+	if (m_distance_devant < m_D2 && m_distance_devant >20 )
 	{
 				
 			m_niveau_correction = 2;
@@ -307,24 +322,24 @@ void CEtoile::CorrectionTrajectoire()
 	};
 
 
-	if (m_distance_devant < 21 && m_distance_devant >10)				 // virage additionnel
+	if (m_distance_devant < 21 && m_distance_devant >10)				// virage additionnel
 	{
 				
 			m_niveau_correction = 4;
-			float cosTeta = 0.984807, sinTeta = 0.173648;			// virage additionnel
-					//float cosTeta = 0.939693, sinTeta = 0.34202;			// virage 20 degres
+			float cosTeta = 0.984807, sinTeta = 0.173648;				// virage 10 degres
+			//float cosTeta = 0.939693, sinTeta = 0.34202;				// virage 20 degres
 
-			if (m_sinTeta > 0)												// >0: obstacle à gauche, <0: obstacle à droite.
+			if (m_sinTeta > 0)											// >0: obstacle à gauche, <0: obstacle à droite.
 			{
-				sinTeta = -sinTeta;											// virage -5 degres.
+				sinTeta = -sinTeta;										// virage -5 degres.
 			};
 
-			float m_V1 = sqrt(pow(m_Vx, 2) + pow(m_Vy, 2));			//vitesse de l'objet
+			float m_V1 = sqrt(pow(m_Vx, 2) + pow(m_Vy, 2));				//vitesse de l'objet
 
-			m_Vx = cosTeta * temp_x - sinTeta * temp_y;				//rotation
+			m_Vx = cosTeta * temp_x - sinTeta * temp_y;					//rotation
 			m_Vy = sinTeta * temp_x + cosTeta * temp_y;
 
-			m_V = sqrt(pow(m_Vx, 2) + pow(m_Vy, 2));				//vitesse de l'objet
+			m_V = sqrt(pow(m_Vx, 2) + pow(m_Vy, 2));					//vitesse de l'objet
 					
 				
 
@@ -388,3 +403,10 @@ void CEtoile::RebonditY()
 		m_V = sqrt(pow(m_Vx, 2) + pow(m_Vy, 2));	//vitesse de l'objet 
 		
 }
+
+void CEtoile::Set3D(bool m_3D)
+{
+
+	m_3D_enabled = m_3D;
+
+};
